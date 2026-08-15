@@ -1,0 +1,78 @@
+name: nlq-analytics
+
+services:
+  postgres:
+    # pgvector ships the extension preinstalled; plain postgres:16 would need
+    # a build step to add it.
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: nlq
+      POSTGRES_PASSWORD: nlq_dev_password
+      POSTGRES_DB: nlq_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nlq -d nlq_app"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/backend.Dockerfile
+    environment:
+      ENVIRONMENT: development
+      DATABASE_URL: postgresql+psycopg://nlq:nlq_dev_password@postgres:5432/nlq_app
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-me}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # A second Postgres holding a realistic e-commerce schema. This is the
+  # *target* database used for demos and the custom evaluation set — never
+  # the app's own storage.
+  sample-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demo_password
+      POSTGRES_DB: ecommerce
+    ports:
+      - "5433:5432"
+    volumes:
+      - sample_data:/var/lib/postgresql/data
+    profiles: ["demo"]
+
+volumes:
+  postgres_data:
+  redis_data:
+  sample_data:

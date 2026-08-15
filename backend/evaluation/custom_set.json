@@ -1,0 +1,72 @@
+[
+  {
+    "id": "custom-001",
+    "question": "How many customers do we have?",
+    "db_id": "ecommerce",
+    "difficulty": "easy",
+    "gold_sql": "SELECT COUNT(*) FROM customers"
+  },
+  {
+    "id": "custom-002",
+    "question": "List the five most expensive products.",
+    "db_id": "ecommerce",
+    "difficulty": "easy",
+    "gold_sql": "SELECT name, price FROM products ORDER BY price DESC LIMIT 5"
+  },
+  {
+    "id": "custom-003",
+    "question": "What is our total revenue?",
+    "db_id": "ecommerce",
+    "difficulty": "easy",
+    "gold_sql": "SELECT SUM(total_amount) FROM orders WHERE status = 'completed'"
+  },
+  {
+    "id": "custom-004",
+    "question": "Which product categories generated the most revenue last quarter?",
+    "db_id": "ecommerce",
+    "difficulty": "medium",
+    "gold_sql": "SELECT c.name, SUM(oi.quantity * oi.unit_price) AS revenue FROM order_items oi JOIN products p ON p.id = oi.product_id JOIN categories c ON c.id = p.category_id JOIN orders o ON o.id = oi.order_id WHERE o.created_at >= DATE_TRUNC('quarter', CURRENT_DATE) - INTERVAL '3 months' AND o.created_at < DATE_TRUNC('quarter', CURRENT_DATE) GROUP BY c.name ORDER BY revenue DESC"
+  },
+  {
+    "id": "custom-005",
+    "question": "Who are our top ten customers by lifetime spend?",
+    "db_id": "ecommerce",
+    "difficulty": "medium",
+    "gold_sql": "SELECT c.id, c.email, SUM(o.total_amount) AS lifetime_spend FROM customers c JOIN orders o ON o.customer_id = c.id WHERE o.status = 'completed' GROUP BY c.id, c.email ORDER BY lifetime_spend DESC LIMIT 10"
+  },
+  {
+    "id": "custom-006",
+    "question": "Which customers have never placed an order?",
+    "db_id": "ecommerce",
+    "difficulty": "medium",
+    "gold_sql": "SELECT c.id, c.email FROM customers c LEFT JOIN orders o ON o.customer_id = c.id WHERE o.id IS NULL"
+  },
+  {
+    "id": "custom-007",
+    "question": "What is the month-over-month growth in orders this year?",
+    "db_id": "ecommerce",
+    "difficulty": "hard",
+    "gold_sql": "WITH monthly AS (SELECT DATE_TRUNC('month', created_at) AS month, COUNT(*) AS order_count FROM orders WHERE created_at >= DATE_TRUNC('year', CURRENT_DATE) GROUP BY 1) SELECT month, order_count, ROUND(100.0 * (order_count - LAG(order_count) OVER (ORDER BY month)) / NULLIF(LAG(order_count) OVER (ORDER BY month), 0), 2) AS growth_pct FROM monthly ORDER BY month"
+  },
+  {
+    "id": "custom-008",
+    "question": "Which products were ordered together most often?",
+    "db_id": "ecommerce",
+    "difficulty": "hard",
+    "gold_sql": "SELECT a.product_id AS product_a, b.product_id AS product_b, COUNT(*) AS times_together FROM order_items a JOIN order_items b ON a.order_id = b.order_id AND a.product_id < b.product_id GROUP BY a.product_id, b.product_id ORDER BY times_together DESC LIMIT 10"
+  },
+  {
+    "id": "custom-009",
+    "question": "What is the average order value by region?",
+    "db_id": "ecommerce",
+    "difficulty": "medium",
+    "gold_sql": "SELECT c.region, AVG(o.total_amount) AS avg_order_value FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.status = 'completed' GROUP BY c.region ORDER BY avg_order_value DESC"
+  },
+  {
+    "id": "custom-010",
+    "question": "Show me products that are out of stock but were ordered in the last 30 days.",
+    "db_id": "ecommerce",
+    "difficulty": "hard",
+    "gold_sql": "SELECT DISTINCT p.id, p.name FROM products p JOIN order_items oi ON oi.product_id = p.id JOIN orders o ON o.id = oi.order_id WHERE p.stock_quantity = 0 AND o.created_at >= CURRENT_DATE - INTERVAL '30 days'"
+  }
+]

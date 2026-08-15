@@ -1,0 +1,37 @@
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- local databases ---
+*.db
+*.sqlite3
+
+# --- node ---
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# --- environment ---
+.env
+.env.local
+.env.*.local
+
+# --- evaluation data (large, fetched separately) ---
+backend/evaluation/data/
+mlruns/
+
+# --- editors / os ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
