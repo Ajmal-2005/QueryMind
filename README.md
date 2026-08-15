@@ -4,8 +4,13 @@ Ask a relational database questions in plain English; get back validated SQL,
 a result table, a chart, and a written summary.
 
 Capstone implementation of [`proposal.md`](proposal.md). **Current state:
-Phase 1 complete** — you can connect a database, index its schema, and browse
-the result. Natural-language querying arrives in Phase 2.
+Phase 2 complete** — connect a database, index its schema, and ask it
+questions in English to get generated SQL back.
+
+> **No accuracy has been measured yet.** With no `ANTHROPIC_API_KEY` set, the
+> pipeline falls back to a stub that returns placeholder SQL without reading
+> the question. Set a key to get real translations — see
+> [`docs/phase-2.md`](docs/phase-2.md).
 
 ---
 
@@ -77,6 +82,10 @@ It prints a file path. In the app, click **Add connection**, choose **SQLite
 schema** shows the tables, keys, join paths, sample values, and the
 description text that retrieval will search.
 
+Then open **Ask** and put a question to it. "How this was built" under each
+answer shows which tables were retrieved, which arrived via foreign-key
+expansion, and how long each pipeline stage took.
+
 ---
 
 ## Evaluation harness
@@ -86,8 +95,9 @@ cd backend && .venv/Scripts/python -m evaluation.runner --dataset custom
 ```
 
 Reports execution accuracy, valid-SQL rate, schema-linking recall, correction
-recovery rate, and latency percentiles. Until the Phase 2 pipeline lands the
-predictor is a stub, so a 0% baseline is the expected and correct output.
+recovery rate, and latency percentiles. The harness's predictor slot is still
+the placeholder stub — connecting the Phase 2 pipeline to it is the first
+task of Phase 3, so a 0% baseline remains the expected output today.
 
 The custom 10-question e-commerce set is committed. Spider and BIRD are large
 and licence-gated, so they are not vendored — extract them into
@@ -128,7 +138,7 @@ docs/              phase notes and decisions
 |---|---|---|
 | 0 | Foundation: repo, CI, auth, health, eval harness | **Done** |
 | 1 | Connection manager and schema introspection | **Done** |
-| 2 | NL→SQL core: intent, retrieval, generation | Not started |
+| 2 | NL→SQL core: intent, retrieval, generation | **Done** (untested against a live model) |
 | 3 | Validation gates, sandboxed execution, self-correction | Not started |
 | 4 | Analytics: profiling, charts, narrative insight | Not started |
 | 5 | Conversation and learning from corrections | Not started |
@@ -137,7 +147,7 @@ docs/              phase notes and decisions
 
 Phase notes record what was built, what was verified, what was *not*, and why
 each decision was made: [`docs/phase-0.md`](docs/phase-0.md),
-[`docs/phase-1.md`](docs/phase-1.md).
+[`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md).
 
 ---
 

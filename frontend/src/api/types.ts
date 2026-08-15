@@ -114,3 +114,43 @@ export interface SchemaResponse {
   edges: SchemaEdge[]
   isolated_tables: string[]
 }
+
+export type QuestionType =
+  | 'aggregation'
+  | 'comparison'
+  | 'trend'
+  | 'ranking'
+  | 'filter'
+  | 'ambiguous'
+
+export interface RetrievedTable {
+  table_name: string
+  score: number
+  via_expansion: boolean
+  dense_rank: number | null
+  sparse_rank: number | null
+}
+
+export interface Generation {
+  sql: string
+  confidence: number
+  explanation: string
+  assumptions: string[]
+  model: string
+  input_tokens: number
+  output_tokens: number
+}
+
+export interface QueryResponse {
+  query_id: string | null
+  question: string
+  resolved_question: string
+  question_type: QuestionType
+  needs_clarification: boolean
+  clarification: string | null
+  generation: Generation | null
+  retrieved_tables: RetrievedTable[]
+  embedder: string | null
+  error: string | null
+  timings_ms: Record<string, number>
+}

@@ -1,22 +1,41 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 
+import { AppShell } from '@/components/AppShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { DashboardPage } from '@/pages/DashboardPage'
+import { AskPage } from '@/pages/AskPage'
+import { ConnectionsPage } from '@/pages/ConnectionsPage'
 import { LoginPage } from '@/pages/LoginPage'
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute>
+      <AppShell>{children}</AppShell>
+    </ProtectedRoute>
+  )
+}
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route
-        path="/"
+        path="/ask"
         element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
+          <Shell>
+            <AskPage />
+          </Shell>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route
+        path="/connections"
+        element={
+          <Shell>
+            <ConnectionsPage />
+          </Shell>
+        }
+      />
+      <Route path="/" element={<Navigate to="/ask" replace />} />
+      <Route path="*" element={<Navigate to="/ask" replace />} />
     </Routes>
   )
 }

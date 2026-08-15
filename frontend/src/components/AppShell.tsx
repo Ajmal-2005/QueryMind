@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 import { HealthBadge } from '@/components/HealthBadge'
 import { Icon } from '@/components/icons'
@@ -10,14 +10,15 @@ import { useThemeStore } from '@/stores/themeStore'
 interface NavEntry {
   icon: string
   label: string
+  to?: string
   /** Phase that ships this screen; set means it is not built yet. */
   phase?: string
 }
 
 const NAV: NavEntry[] = [
-  { icon: 'terminal', label: 'Workspace', phase: '2' },
-  { icon: 'cloud_sync', label: 'Connections' },
-  { icon: 'history', label: 'History', phase: '2' },
+  { icon: 'terminal', label: 'Ask', to: '/ask' },
+  { icon: 'cloud_sync', label: 'Connections', to: '/connections' },
+  { icon: 'history', label: 'History', phase: '5' },
   { icon: 'dashboard', label: 'Dashboards', phase: '4' },
   { icon: 'settings', label: 'Settings', phase: '6' },
 ]
@@ -60,9 +61,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <button
-          disabled
-          title="Natural-language querying arrives in Phase 2"
-          className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-label-md text-on-primary transition-opacity hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+          onClick={() => navigate('/ask')}
+          className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-label-md text-on-primary transition-opacity hover:bg-opacity-90"
         >
           <Icon name="add" size={18} />
           New Query
@@ -99,7 +99,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <SearchInput
                 placeholder="Search connections, tables, or columns…"
                 disabled
-                title="Global search arrives with the query workspace in Phase 2"
+                title="Global search arrives in Phase 5"
                 className="disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
@@ -123,7 +123,9 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <main className="flex-1 overflow-y-auto p-gutter md:p-margin-desktop">
-          <div className="mx-auto w-full max-w-container-max">{children}</div>
+          <div className="mx-auto flex h-full w-full max-w-container-max flex-col">
+            {children}
+          </div>
         </main>
       </div>
     </div>
@@ -131,9 +133,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function NavItem({ entry }: { entry: NavEntry }) {
-  const upcoming = Boolean(entry.phase)
-
-  if (upcoming) {
+  if (entry.phase) {
     return (
       <span
         aria-disabled="true"
@@ -150,9 +150,22 @@ function NavItem({ entry }: { entry: NavEntry }) {
   }
 
   return (
-    <span className="flex scale-[0.98] items-center gap-3 rounded-lg bg-secondary-container px-3 py-2.5 text-label-md text-on-secondary-container transition-transform duration-100">
-      <Icon name={entry.icon} size={20} fill />
-      <span className="flex-1">{entry.label}</span>
-    </span>
+    <NavLink
+      to={entry.to!}
+      className={({ isActive }) =>
+        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md transition-colors ${
+          isActive
+            ? 'scale-[0.98] bg-secondary-container text-on-secondary-container'
+            : 'text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface'
+        }`
+      }
+    >
+      {({ isActive }) => (
+        <>
+          <Icon name={entry.icon} size={20} fill={isActive} />
+          <span className="flex-1">{entry.label}</span>
+        </>
+      )}
+    </NavLink>
   )
 }
