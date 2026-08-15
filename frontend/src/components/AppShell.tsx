@@ -1,0 +1,158 @@
+import type { ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
+
+import { HealthBadge } from '@/components/HealthBadge'
+import { Icon } from '@/components/icons'
+import { IconButton, SearchInput } from '@/components/ui'
+import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
+
+interface NavEntry {
+  icon: string
+  label: string
+  /** Phase that ships this screen; set means it is not built yet. */
+  phase?: string
+}
+
+const NAV: NavEntry[] = [
+  { icon: 'terminal', label: 'Workspace', phase: '2' },
+  { icon: 'cloud_sync', label: 'Connections' },
+  { icon: 'history', label: 'History', phase: '2' },
+  { icon: 'dashboard', label: 'Dashboards', phase: '4' },
+  { icon: 'settings', label: 'Settings', phase: '6' },
+]
+
+export function AppShell({ children }: { children: ReactNode }) {
+  const user = useAuthStore((s) => s.user)
+  const clear = useAuthStore((s) => s.clear)
+  const theme = useThemeStore((s) => s.theme)
+  const toggleTheme = useThemeStore((s) => s.toggle)
+  const navigate = useNavigate()
+
+  function signOut() {
+    clear()
+    navigate('/login', { replace: true })
+  }
+
+  const initials =
+    (user?.full_name || user?.email || '?')
+      .split(/[\s@.]+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join('') || '?'
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <nav className="fixed left-0 top-0 z-40 hidden h-full w-sidebar flex-col border-r border-subtle bg-surface-container-lowest p-4 md:flex">
+        <div className="mb-8 flex items-center gap-3 px-2">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-on-primary">
+            <Icon name="hub" size={20} fill />
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-headline-sm font-bold text-primary">
+              Syntactic Logic
+            </h1>
+            <p className="text-label-md uppercase tracking-wider text-on-surface-variant">
+              NLQ Analytics
+            </p>
+          </div>
+        </div>
+
+        <button
+          disabled
+          title="Natural-language querying arrives in Phase 2"
+          className="mb-6 flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-label-md text-on-primary transition-opacity hover:bg-opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <Icon name="add" size={18} />
+          New Query
+        </button>
+
+        <div className="flex flex-1 flex-col gap-1">
+          {NAV.map((entry) => (
+            <NavItem key={entry.label} entry={entry} />
+          ))}
+        </div>
+
+        <div className="mt-auto border-t border-subtle pt-4">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-fixed text-label-md text-on-primary-container">
+              {initials}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-body-md text-on-surface">{user?.email}</p>
+              <p className="text-label-md capitalize text-on-surface-variant">
+                {user?.role}
+              </p>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="relative flex h-full min-w-0 flex-1 flex-col md:ml-sidebar">
+        <header className="sticky top-0 z-30 flex h-16 w-full shrink-0 items-center justify-between gap-4 border-b border-subtle bg-surface px-margin-mobile md:px-margin-desktop">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
+            <span className="text-headline-sm font-bold text-primary md:hidden">
+              Syntactic Logic
+            </span>
+            <div className="hidden w-full max-w-md md:block">
+              <SearchInput
+                placeholder="Search connections, tables, or columns…"
+                disabled
+                title="Global search arrives with the query workspace in Phase 2"
+                className="disabled:cursor-not-allowed disabled:opacity-60"
+              />
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <div className="hidden lg:block">
+              <HealthBadge />
+            </div>
+            <span className="mx-1 hidden h-6 w-px bg-subtle lg:block" />
+            <IconButton
+              icon={theme === 'dark' ? 'light_mode' : 'dark_mode'}
+              label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              onClick={toggleTheme}
+            />
+            <IconButton icon="logout" label="Sign out" onClick={signOut} />
+            <span className="ml-1 flex h-8 w-8 items-center justify-center rounded-full border border-subtle bg-primary-fixed text-label-md text-on-primary-container">
+              {initials}
+            </span>
+          </div>
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-gutter md:p-margin-desktop">
+          <div className="mx-auto w-full max-w-container-max">{children}</div>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+function NavItem({ entry }: { entry: NavEntry }) {
+  const upcoming = Boolean(entry.phase)
+
+  if (upcoming) {
+    return (
+      <span
+        aria-disabled="true"
+        title={`Ships in Phase ${entry.phase}`}
+        className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-outline"
+      >
+        <Icon name={entry.icon} size={20} />
+        <span className="flex-1">{entry.label}</span>
+        <span className="rounded bg-surface-container-low px-1.5 py-0.5 text-[10px] tracking-normal">
+          P{entry.phase}
+        </span>
+      </span>
+    )
+  }
+
+  return (
+    <span className="flex scale-[0.98] items-center gap-3 rounded-lg bg-secondary-container px-3 py-2.5 text-label-md text-on-secondary-container transition-transform duration-100">
+      <Icon name={entry.icon} size={20} fill />
+      <span className="flex-1">{entry.label}</span>
+    </span>
+  )
+}

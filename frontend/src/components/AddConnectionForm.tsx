@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 import { errorMessage } from '@/api/client'
 import { createConnection } from '@/api/connections'
 import type { Dialect } from '@/api/types'
+import { Icon } from '@/components/icons'
+import { Alert, Button, Field, Input, Select } from '@/components/ui'
 
 const DIALECTS: { value: Dialect; label: string; defaultPort: number }[] = [
   { value: 'postgres', label: 'PostgreSQL', defaultPort: 5432 },
@@ -11,7 +13,7 @@ const DIALECTS: { value: Dialect; label: string; defaultPort: number }[] = [
   { value: 'sqlite', label: 'SQLite (file)', defaultPort: 0 },
 ]
 
-export function AddConnectionForm({ onDone }: { onDone: () => void }) {
+export function AddConnectionDialog({ onClose }: { onClose: () => void }) {
   const [dialect, setDialect] = useState<Dialect>('sqlite')
   const [name, setName] = useState('')
   const [database, setDatabase] = useState('')
@@ -24,11 +26,21 @@ export function AddConnectionForm({ onDone }: { onDone: () => void }) {
   const queryClient = useQueryClient()
   const isFile = dialect === 'sqlite'
 
+  // Escape closes the dialog, as it does in every other dialog the user has
+  // ever used.
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+
   const mutation = useMutation({
     mutationFn: createConnection,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['connections'] })
-      onDone()
+      onClose()
     },
     onError: (err) => setError(errorMessage(err, 'Could not save the connection')),
   })
@@ -36,7 +48,7 @@ export function AddConnectionForm({ onDone }: { onDone: () => void }) {
   function handleDialectChange(next: Dialect) {
     setDialect(next)
     const preset = DIALECTS.find((d) => d.value === next)
-    if (preset && preset.defaultPort) setPort(String(preset.defaultPort))
+    if (preset?.defaultPort) setPort(String(preset.defaultPort))
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -48,122 +60,127 @@ export function AddConnectionForm({ onDone }: { onDone: () => void }) {
     mutation.mutate(
       isFile
         ? { name, dialect, database, port: null }
-        : {
-            name,
-            dialect,
-            database,
-            host,
-            port: Number(port),
-            username,
-            password,
-          },
+        : { name, dialect, database, host, port: Number(port), username, password },
     )
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-    >
-      <h3 className="font-medium">Add a database connection</h3>
-
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
-          <span className="font-medium text-slate-700">Type</span>
-          <select
-            value={dialect}
-            onChange={(e) => handleDialectChange(e.target.value as Dialect)}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-          >
-            {DIALECTS.map((d) => (
-              <option key={d.value} value={d.value}>
-                {d.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <Input label="Display name" value={name} onChange={setName} required />
-
-        <label className="block text-sm sm:col-span-2">
-          <span className="font-medium text-slate-700">
-            {isFile ? 'Database file path' : 'Database name'}
-          </span>
-          <input
-            value={database}
-            onChange={(e) => setDatabase(e.target.value)}
-            required
-            placeholder={isFile ? 'C:\\path\\to\\demo_ecommerce.db' : 'analytics'}
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs"
-          />
-        </label>
-
-        {!isFile && (
-          <>
-            <Input label="Host" value={host} onChange={setHost} required />
-            <Input label="Port" value={port} onChange={setPort} type="number" required />
-            <Input label="Username" value={username} onChange={setUsername} required />
-            <Input
-              label="Password"
-              value={password}
-              onChange={setPassword}
-              type="password"
-            />
-          </>
-        )}
-      </div>
-
-      {!isFile && (
-        <p className="mt-3 text-xs text-slate-400">
-          Credentials are encrypted before storage and are never returned by the API.
-        </p>
-      )}
-
-      {error && (
-        <p role="alert" className="mt-3 text-sm text-rose-600">
-          {error}
-        </p>
-      )}
-
-      <div className="mt-5 flex gap-2">
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
-        >
-          {mutation.isPending ? 'Saving…' : 'Save connection'}
-        </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-100"
-        >
-          Cancel
-        </button>
-      </div>
-    </form>
-  )
-}
-
-interface InputProps {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  type?: string
-  required?: boolean
-}
-
-function Input({ label, value, onChange, type = 'text', required }: InputProps) {
-  return (
-    <label className="block text-sm">
-      <span className="font-medium text-slate-700">{label}</span>
-      <input
-        type={type}
-        value={value}
-        required={required}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:items-center">
+      <div
+        className="fixed inset-0 bg-on-surface/40 backdrop-blur-[2px]"
+        onClick={onClose}
+        aria-hidden="true"
       />
-    </label>
+
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-connection-title"
+        className="relative w-full max-w-lg animate-fade-in rounded-xl border border-subtle bg-surface-container-lowest shadow-lift"
+      >
+        <div className="flex items-start gap-3 border-b border-subtle px-6 py-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-secondary-container text-on-secondary-container">
+            <Icon name="cloud_sync" size={20} />
+          </div>
+          <div className="min-w-0">
+            <h3 id="add-connection-title" className="text-headline-sm text-primary">
+              Add a database connection
+            </h3>
+            <p className="mt-0.5 text-body-md text-on-surface-variant">
+              Credentials are encrypted before storage and never returned by the API.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+            <Field label="DATABASE TYPE">
+              <Select
+                value={dialect}
+                onChange={(e) => handleDialectChange(e.target.value as Dialect)}
+              >
+                {DIALECTS.map((d) => (
+                  <option key={d.value} value={d.value}>
+                    {d.label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field label="DISPLAY NAME">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="Production DB Main"
+              />
+            </Field>
+
+            <Field
+              label={isFile ? 'DATABASE FILE PATH' : 'DATABASE NAME'}
+              className="sm:col-span-2"
+            >
+              <Input
+                value={database}
+                onChange={(e) => setDatabase(e.target.value)}
+                required
+                placeholder={isFile ? 'C:\\path\\to\\demo_ecommerce.db' : 'analytics'}
+                className="font-mono text-code-sm"
+              />
+            </Field>
+
+            {!isFile && (
+              <>
+                <Field label="HOST">
+                  <Input
+                    value={host}
+                    onChange={(e) => setHost(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="PORT">
+                  <Input
+                    type="number"
+                    value={port}
+                    onChange={(e) => setPort(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="USERNAME">
+                  <Input
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </Field>
+                <Field label="PASSWORD">
+                  <Input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                  />
+                </Field>
+              </>
+            )}
+
+            {error && (
+              <div className="sm:col-span-2">
+                <Alert>{error}</Alert>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 border-t border-subtle bg-surface-bg px-6 py-4">
+            <Button type="button" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="primary" busy={mutation.isPending} icon="add">
+              Save connection
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }

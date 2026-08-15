@@ -2,17 +2,160 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  color-scheme: light;
+@layer base {
+  /* Light palette — the Stitch values, verbatim. */
+  :root {
+    --surface-bg: 248 250 252; /* #F8FAFC */
+    --surface: 252 248 250; /* #fcf8fa */
+    --surface-container-lowest: 255 255 255;
+    --surface-container-low: 246 243 245; /* #f6f3f5 */
+    --surface-container: 240 237 239; /* #f0edef */
+    --surface-container-high: 234 231 233; /* #eae7e9 */
+    --surface-variant: 228 226 228; /* #e4e2e4 */
+
+    --border-subtle: 226 232 240; /* #E2E8F0 */
+    --outline-variant: 198 198 205; /* #c6c6cd */
+    --outline: 118 119 125; /* #76777d */
+
+    --primary: 0 0 0;
+    --on-primary: 255 255 255;
+    --primary-container: 19 27 46; /* #131b2e */
+    --on-primary-container: 124 131 155; /* #7c839b */
+    --primary-fixed: 218 226 253; /* #dae2fd */
+
+    --secondary: 81 95 116; /* #515f74 */
+    --secondary-container: 213 227 253; /* #d5e3fd */
+    --on-secondary-container: 87 101 123; /* #57657b */
+
+    --on-surface: 27 27 29; /* #1b1b1d */
+    --on-surface-variant: 69 70 77; /* #45464d */
+
+    --data-indigo: 79 70 229; /* #4F46E5 */
+    --data-amber: 245 158 11; /* #F59E0B */
+    --sql-syntax-string: 5 150 105; /* #059669 */
+    --sql-syntax-keyword: 124 58 237; /* #7C3AED */
+
+    --error: 186 26 26; /* #ba1a1a */
+    --error-container: 255 218 214; /* #ffdad6 */
+    --success-container: 209 250 229;
+    --info-container: 224 231 255;
+
+    color-scheme: light;
+  }
+
+  /* Dark palette. Stitch only specifies light, so these are derived: the same
+     roles, re-grounded on a near-black page. `primary` inverts to near-white,
+     because a black-on-black button is not a button. */
+  .dark {
+    --surface-bg: 11 14 20;
+    --surface: 18 21 28;
+    --surface-container-lowest: 18 21 28;
+    --surface-container-low: 26 30 39;
+    --surface-container: 31 36 46;
+    --surface-container-high: 35 40 52;
+    --surface-variant: 42 48 61;
+
+    --border-subtle: 35 40 52;
+    --outline-variant: 52 59 74;
+    --outline: 122 132 150;
+
+    --primary: 241 245 249;
+    --on-primary: 11 14 20;
+    --primary-container: 30 42 68;
+    --on-primary-container: 168 192 234;
+    --primary-fixed: 30 42 68;
+
+    --secondary: 168 176 192;
+    --secondary-container: 30 42 68;
+    --on-secondary-container: 168 192 234;
+
+    --on-surface: 230 234 242;
+    --on-surface-variant: 152 161 179;
+
+    --data-indigo: 129 140 248;
+    --data-amber: 251 191 36;
+    --sql-syntax-string: 52 211 153;
+    --sql-syntax-keyword: 167 139 250;
+
+    --error: 248 113 113;
+    --error-container: 59 22 24;
+    --success-container: 12 43 37;
+    --info-container: 30 33 62;
+
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-surface-bg font-sans text-body-md text-on-surface antialiased;
+  }
+
+  /* Slim scrollbars, for data density. */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--outline-variant));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--outline));
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-data-indigo ring-offset-2 ring-offset-surface-bg;
+  }
+
+  /* Set by the theme store for the duration of a theme swap. See the comment
+     in themeStore.ts: transitioned properties fed by custom properties can
+     otherwise keep their pre-swap computed value. */
+  .theme-switching *,
+  .theme-switching *::before,
+  .theme-switching *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
-html,
-body,
-#root {
-  height: 100%;
-}
+@layer components {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings:
+      'FILL' 0,
+      'wght' 400,
+      'GRAD' 0,
+      'opsz' 24;
+  }
 
-body {
-  @apply bg-slate-50 text-slate-900 antialiased;
-  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  .material-symbols-outlined.fill {
+    font-variation-settings: 'FILL' 1;
+  }
+
+  /* Alternating table rows, used in the data grids. */
+  .zebra-row:nth-child(even) {
+    background-color: rgb(var(--surface-bg));
+  }
 }

@@ -4,9 +4,30 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { login, register } from '@/api/auth'
 import { errorMessage } from '@/api/client'
 import { HealthBadge } from '@/components/HealthBadge'
+import { Icon } from '@/components/icons'
+import { Alert, Button, Field, IconButton, Input } from '@/components/ui'
 import { useAuthStore } from '@/stores/authStore'
+import { useThemeStore } from '@/stores/themeStore'
 
 type Mode = 'login' | 'register'
+
+const HIGHLIGHTS = [
+  {
+    icon: 'chat',
+    title: 'Ask in plain English',
+    body: 'Questions become validated SQL — no query language required.',
+  },
+  {
+    icon: 'schema',
+    title: 'Schema-aware retrieval',
+    body: 'Only the tables your question needs reach the model, not all 400.',
+  },
+  {
+    icon: 'shield',
+    title: 'Read-only by construction',
+    body: 'Four validation gates and a SELECT-only role. Nothing can write.',
+  },
+]
 
 export function LoginPage() {
   const [mode, setMode] = useState<Mode>('login')
@@ -17,6 +38,8 @@ export function LoginPage() {
   const [busy, setBusy] = useState(false)
 
   const setSession = useAuthStore((s) => s.setSession)
+  const theme = useThemeStore((s) => s.theme)
+  const toggleTheme = useThemeStore((s) => s.toggle)
   const navigate = useNavigate()
   const location = useLocation()
   const destination = (location.state as { from?: string } | null)?.from ?? '/'
@@ -40,109 +63,142 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-full items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        <h1 className="text-2xl font-semibold tracking-tight">NLQ Analytics</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Ask your database questions in plain English.
-        </p>
-
-        <form
-          onSubmit={handleSubmit}
-          className="mt-8 space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm"
-        >
-          {mode === 'register' && (
-            <Field
-              label="Name"
-              value={fullName}
-              onChange={setFullName}
-              type="text"
-              autoComplete="name"
-            />
-          )}
-
-          <Field
-            label="Email"
-            value={email}
-            onChange={setEmail}
-            type="email"
-            autoComplete="email"
-            required
-          />
-
-          <Field
-            label="Password"
-            value={password}
-            onChange={setPassword}
-            type="password"
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            required
-            hint={mode === 'register' ? 'At least 8 characters.' : undefined}
-          />
-
-          {error && (
-            <p role="alert" className="text-sm text-rose-600">
-              {error}
+    <div className="grid h-full lg:grid-cols-2">
+      {/* Product panel — hidden on small screens, where the form is all that
+          matters. */}
+      <section className="relative hidden flex-col justify-between border-r border-subtle bg-surface-container-lowest p-12 lg:flex">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-on-primary">
+            <Icon name="hub" size={20} fill />
+          </div>
+          <div>
+            <p className="text-headline-sm font-bold text-primary">Syntactic Logic</p>
+            <p className="text-label-md uppercase tracking-wider text-on-surface-variant">
+              NLQ Analytics
             </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-700 disabled:opacity-50"
-          >
-            {busy ? 'Working…' : mode === 'login' ? 'Sign in' : 'Create account'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setMode(mode === 'login' ? 'register' : 'login')
-              setError(null)
-            }}
-            className="w-full text-sm text-slate-500 underline-offset-4 hover:underline"
-          >
-            {mode === 'login'
-              ? 'No account yet? Create one'
-              : 'Already have an account? Sign in'}
-          </button>
-        </form>
-
-        <div className="mt-6 flex justify-center">
-          <HealthBadge />
+          </div>
         </div>
-      </div>
-    </div>
-  )
-}
 
-interface FieldProps {
-  label: string
-  value: string
-  onChange: (value: string) => void
-  type: string
-  autoComplete?: string
-  required?: boolean
-  hint?: string
-}
+        <div className="max-w-md">
+          <h2 className="text-[32px] font-bold leading-tight tracking-tight text-primary">
+            Your database,
+            <br />
+            <span className="text-data-indigo">answerable in English.</span>
+          </h2>
 
-function Field({ label, value, onChange, type, autoComplete, required, hint }: FieldProps) {
-  const id = `field-${label.toLowerCase()}`
-  return (
-    <div>
-      <label htmlFor={id} className="block text-sm font-medium text-slate-700">
-        {label}
-      </label>
-      <input
-        id={id}
-        type={type}
-        value={value}
-        required={required}
-        autoComplete={autoComplete}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
-      />
-      {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
+          <ul className="mt-10 space-y-6">
+            {HIGHLIGHTS.map((item) => (
+              <li key={item.title} className="flex gap-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-secondary-container text-on-secondary-container">
+                  <Icon name={item.icon} size={18} />
+                </span>
+                <div>
+                  <p className="text-body-lg font-semibold text-on-surface">
+                    {item.title}
+                  </p>
+                  <p className="mt-0.5 text-body-md text-on-surface-variant">
+                    {item.body}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="text-label-md uppercase tracking-wider text-outline">
+          Capstone · Natural Language Query Processing
+        </p>
+      </section>
+
+      <section className="relative flex flex-col items-center justify-center px-6 py-12">
+        <div className="absolute right-5 top-5">
+          <IconButton
+            icon={theme === 'dark' ? 'light_mode' : 'dark_mode'}
+            label="Toggle theme"
+            onClick={toggleTheme}
+          />
+        </div>
+
+        <div className="w-full max-w-sm animate-fade-in">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-on-primary">
+              <Icon name="hub" size={20} fill />
+            </div>
+            <p className="text-headline-sm font-bold text-primary">Syntactic Logic</p>
+          </div>
+
+          <h1 className="text-headline-md text-primary">
+            {mode === 'login' ? 'Welcome back' : 'Create your account'}
+          </h1>
+          <p className="mt-1 text-body-md text-on-surface-variant">
+            {mode === 'login'
+              ? 'Sign in to your workspace.'
+              : 'The first account on this instance becomes the administrator.'}
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            {mode === 'register' && (
+              <Field label="NAME">
+                <Input
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  autoComplete="name"
+                  placeholder="Ada Lovelace"
+                />
+              </Field>
+            )}
+
+            <Field label="EMAIL">
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="you@company.com"
+              />
+            </Field>
+
+            <Field
+              label="PASSWORD"
+              hint={mode === 'register' ? 'At least 8 characters.' : undefined}
+            >
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                placeholder="••••••••••"
+              />
+            </Field>
+
+            {error && <Alert>{error}</Alert>}
+
+            <Button type="submit" variant="primary" busy={busy} className="w-full">
+              {mode === 'login' ? 'Sign in' : 'Create account'}
+            </Button>
+          </form>
+
+          <p className="mt-6 text-center text-body-md text-on-surface-variant">
+            {mode === 'login' ? "Don't have an account?" : 'Already registered?'}{' '}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === 'login' ? 'register' : 'login')
+                setError(null)
+              }}
+              className="font-semibold text-data-indigo underline-offset-4 hover:underline"
+            >
+              {mode === 'login' ? 'Create one' : 'Sign in'}
+            </button>
+          </p>
+
+          <div className="mt-10 flex justify-center border-t border-subtle pt-6">
+            <HealthBadge />
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
