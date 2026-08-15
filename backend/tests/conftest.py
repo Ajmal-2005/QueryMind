@@ -7,6 +7,7 @@ never touch a developer's working data and never depend on Docker.
 import contextlib
 import os
 import tempfile
+import uuid
 from collections.abc import Generator
 
 import pytest
@@ -75,6 +76,55 @@ def client(engine) -> Generator[TestClient, None, None]:
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture(scope="session")
+def demo_db_path(tmp_path_factory) -> str:
+    """A freshly seeded demo e-commerce database, used as a *target* DB.
+
+    Built once per session: seeding is deterministic, and every test that
+    uses it only reads.
+    """
+    from scripts.seed_demo_db import seed
+
+    path = tmp_path_factory.mktemp("target") / "demo_ecommerce.db"
+    seed(path)
+    return str(path)
+
+
+@pytest.fixture
+def demo_connection(db: Session, demo_db_path: str):
+    """A registered, unindexed connection pointing at the demo database."""
+    from app.models.connection import Connection, Dialect
+    from app.models.user import User
+    from app.services.connection.manager import Credentials, encrypt_credentials
+
+    user = User(email=f"owner-{uuid.uuid4().hex[:8]}@example.com", hashed_password="x")
+    db.add(user)
+    db.flush()
+
+    connection = Connection(
+        user_id=user.id,
+        name="Demo e-commerce",
+        dialect=Dialect.SQLITE,
+        host="localhost",
+        port=0,
+        database=demo_db_path,
+        encrypted_credentials=encrypt_credentials(Credentials()),
+    )
+    db.add(connection)
+    db.flush()
+    return connection
+
+
+@pytest.fixture
+def demo_engine(demo_db_path: str):
+    """A read-only engine straight onto the demo database."""
+    from sqlalchemy import create_engine
+
+    engine = create_engine(f"sqlite+pysqlite:///{demo_db_path}")
+    yield engine
+    engine.dispose()
 
 
 @pytest.fixture

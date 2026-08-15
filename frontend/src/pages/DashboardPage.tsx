@@ -1,9 +1,9 @@
 import { useNavigate } from 'react-router-dom'
 
 import { HealthBadge } from '@/components/HealthBadge'
+import { ConnectionsPage } from '@/pages/ConnectionsPage'
 import { useAuthStore } from '@/stores/authStore'
 
-/** Phase 0 placeholder. The chat surface lands in phase 2. */
 export function DashboardPage() {
   const user = useAuthStore((s) => s.user)
   const clear = useAuthStore((s) => s.clear)
@@ -15,47 +15,36 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-10">
-      <header className="flex items-start justify-between gap-4">
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">NLQ Analytics</h1>
           <p className="mt-1 text-sm text-slate-500">
             Signed in as {user?.email} · {user?.role}
           </p>
         </div>
-        <button
-          onClick={signOut}
-          className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
-        >
-          Sign out
-        </button>
+        <div className="flex items-center gap-4">
+          <HealthBadge />
+          <button
+            onClick={signOut}
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-100"
+          >
+            Sign out
+          </button>
+        </div>
       </header>
 
-      <section className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-          System status
-        </h2>
-        <div className="mt-3">
-          <HealthBadge />
-        </div>
-      </section>
+      <main className="mt-8">
+        <ConnectionsPage />
+      </main>
 
-      <section className="mt-6 rounded-xl border border-dashed border-slate-300 p-6">
-        <h2 className="font-medium text-slate-700">Next up</h2>
-        <ol className="mt-3 space-y-2 text-sm text-slate-600">
-          <li>
-            <span className="font-medium">Phase 1</span> — connection manager and
-            schema introspection
-          </li>
-          <li>
-            <span className="font-medium">Phase 2</span> — the NL→SQL core: intent,
-            retrieval, generation
-          </li>
-          <li>
-            <span className="font-medium">Phase 3</span> — validation gates and
-            sandboxed execution
-          </li>
-        </ol>
+      <section className="mt-8 rounded-xl border border-dashed border-slate-300 p-5">
+        <h2 className="text-sm font-medium text-slate-700">Coming next</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          <span className="font-medium">Phase 2</span> — ask a question in plain
+          English: intent analysis, schema-linked retrieval over the index above, and
+          SQL generation.
+        </p>
       </section>
     </div>
   )

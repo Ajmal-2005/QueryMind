@@ -4,7 +4,8 @@ Ask a relational database questions in plain English; get back validated SQL,
 a result table, a chart, and a written summary.
 
 Capstone implementation of [`proposal.md`](proposal.md). **Current state:
-Phase 0 (Foundation) complete.**
+Phase 1 complete** — you can connect a database, index its schema, and browse
+the result. Natural-language querying arrives in Phase 2.
 
 ---
 
@@ -62,6 +63,22 @@ CI runs exactly these three on every push.
 
 ---
 
+## Trying it out
+
+Build the demo target database — an 8-table e-commerce schema with 2,000
+orders:
+
+```bash
+cd backend && .venv/Scripts/python -m scripts.seed_demo_db
+```
+
+It prints a file path. In the app, click **Add connection**, choose **SQLite
+(file)**, paste that path, save, then **Test** and **Index schema**. **View
+schema** shows the tables, keys, join paths, sample values, and the
+description text that retrieval will search.
+
+---
+
 ## Evaluation harness
 
 ```bash
@@ -110,7 +127,7 @@ docs/              phase notes and decisions
 | Phase | Scope | State |
 |---|---|---|
 | 0 | Foundation: repo, CI, auth, health, eval harness | **Done** |
-| 1 | Connection manager and schema introspection | Not started |
+| 1 | Connection manager and schema introspection | **Done** |
 | 2 | NL→SQL core: intent, retrieval, generation | Not started |
 | 3 | Validation gates, sandboxed execution, self-correction | Not started |
 | 4 | Analytics: profiling, charts, narrative insight | Not started |
@@ -118,8 +135,9 @@ docs/              phase notes and decisions
 | 6 | Hardening, benchmarks, ablations | Not started |
 | 7 | Report, deck, demo | Not started |
 
-See [`docs/phase-0.md`](docs/phase-0.md) for what was built and the decisions
-behind it.
+Phase notes record what was built, what was verified, what was *not*, and why
+each decision was made: [`docs/phase-0.md`](docs/phase-0.md),
+[`docs/phase-1.md`](docs/phase-1.md).
 
 ---
 

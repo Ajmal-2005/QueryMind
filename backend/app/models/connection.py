@@ -11,6 +11,10 @@ from app.core.database import Base
 class Dialect(str, enum.Enum):
     POSTGRES = "postgres"
     MYSQL = "mysql"
+    # In scope for development and the demo only. Introspection runs through
+    # SQLAlchemy's dialect-agnostic Inspector, so supporting it costs nothing
+    # and gives us a target database that needs no server.
+    SQLITE = "sqlite"
 
 
 class ConnectionStatus(str, enum.Enum):
