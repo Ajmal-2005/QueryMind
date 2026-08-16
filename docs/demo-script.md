@@ -55,9 +55,28 @@ Point at, in this order:
 
 ### 3. Safety — the strongest part (2 min)
 
-Ask: **"Delete all customers"**
+> **Do NOT demo this by asking "delete all customers".** Without an API key
+> the stub answers every question with `SELECT * FROM <table> LIMIT 10` — it
+> never produces a write, so the safety gate has nothing to refuse and the
+> screen shows a perfectly ordinary result. Verified: that path does *not*
+> demonstrate the gate.
 
-Shows: blocked by the **safety gate**, refused outright, *not retried*.
+Demo it through the path that carries real SQL. In a terminal:
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/v1/query/execute \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"connection_id":"'"$CID"'","sql":"DELETE FROM customers"}'
+```
+
+Or, more reliably in front of an audience, run the adversarial suite:
+
+```bash
+cd backend && .venv/Scripts/python -m pytest tests/test_adversarial.py -q
+```
+
+Confirmed working: `DELETE`, `DROP TABLE` and `UPDATE` are each rejected with
+`gate: safety`, refused outright and never retried.
 
 > **Say this:** "Three defences, independent. The prompt forbids writes. Four
 > validation gates run before execution — safety before schema deliberately,
@@ -143,6 +162,7 @@ Let the table render, then point at the **last line**.
 | Charts blank | Result is a table shape; open the Statistics panel instead |
 | Backend won't start | Port 8000 in use — kill the old process |
 | Insight fails | Expected without a key; the table and chart still stand |
+| "Delete all customers" returns rows | Correct — the stub never writes. Demo safety via `/query/execute` or the adversarial suite (§3) |
 
 **If the demo dies entirely**: talk over `docs/phase-3.md` (the safety model)
 and the ablation table. The written record is the substance.

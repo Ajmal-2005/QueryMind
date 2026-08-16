@@ -10,9 +10,7 @@ import { useThemeStore } from '@/stores/themeStore'
 interface NavEntry {
   icon: string
   label: string
-  to?: string
-  /** Phase that ships this screen; set means it is not built yet. */
-  phase?: string
+  to: string
 }
 
 const NAV: NavEntry[] = [
@@ -20,7 +18,7 @@ const NAV: NavEntry[] = [
   { icon: 'cloud_sync', label: 'Connections', to: '/connections' },
   { icon: 'menu_book', label: 'Glossary', to: '/glossary' },
   { icon: 'dashboard', label: 'Dashboards', to: '/dashboards' },
-  { icon: 'settings', label: 'Settings', phase: '6' },
+  { icon: 'settings', label: 'Settings', to: '/settings' },
 ]
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -133,25 +131,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 }
 
 function NavItem({ entry }: { entry: NavEntry }) {
-  if (entry.phase) {
-    return (
-      <span
-        aria-disabled="true"
-        title={`Ships in Phase ${entry.phase}`}
-        className="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2.5 text-label-md text-outline"
-      >
-        <Icon name={entry.icon} size={20} />
-        <span className="flex-1">{entry.label}</span>
-        <span className="rounded bg-surface-container-low px-1.5 py-0.5 text-[10px] tracking-normal">
-          P{entry.phase}
-        </span>
-      </span>
-    )
-  }
-
   return (
     <NavLink
-      to={entry.to!}
+      to={entry.to}
       className={({ isActive }) =>
         `flex items-center gap-3 rounded-lg px-3 py-2.5 text-label-md transition-colors ${
           isActive

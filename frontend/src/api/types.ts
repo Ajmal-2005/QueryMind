@@ -448,3 +448,30 @@ export interface GlossaryTerm {
   created_at: string
   updated_at: string
 }
+
+export interface UsageTotals {
+  queries: number
+  executed: number
+  rejected: number
+  recovered_by_correction: number
+  tokens: number
+  estimated_cost_usd: number
+  mean_latency_ms: number
+}
+
+export interface UsageByUser {
+  user_id: string
+  email: string
+  queries: number
+  tokens: number
+  estimated_cost_usd: number
+}
+
+export interface UsageResponse {
+  window_days: number
+  scope: string
+  totals: UsageTotals
+  by_user: UsageByUser[]
+  rates: { model: string; input_per_mtok: number; output_per_mtok: number }[]
+  cost_note: string
+}

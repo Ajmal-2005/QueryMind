@@ -1,22 +1,16 @@
+/** One-glance system status for the app header.
+ *
+ *  Deliberately says one thing. An earlier version listed every service and
+ *  its state — "database healthy · redis off" — which is telemetry, not
+ *  product: it asks the user to interpret infrastructure they did not
+ *  configure and cannot act on. The detail still exists, on the Settings
+ *  page, where someone looking for it will go.
+ */
+
 import { useQuery } from '@tanstack/react-query'
 
 import { fetchHealth } from '@/api/health'
-import type { ServiceStatus } from '@/api/types'
 import { Skeleton } from '@/components/ui'
-
-const DOT: Record<ServiceStatus, string> = {
-  ok: 'bg-sql-syntax-string',
-  degraded: 'bg-data-amber',
-  unavailable: 'bg-error',
-  not_configured: 'bg-outline',
-}
-
-const LABEL: Record<ServiceStatus, string> = {
-  ok: 'healthy',
-  degraded: 'degraded',
-  unavailable: 'unreachable',
-  not_configured: 'off',
-}
 
 export function HealthBadge() {
   const { data, isPending, isError } = useQuery({
@@ -26,35 +20,44 @@ export function HealthBadge() {
     retry: 1,
   })
 
-  if (isPending) return <Skeleton className="h-5 w-48" />
+  if (isPending) return <Skeleton className="h-5 w-24" />
 
   if (isError || !data) {
     return (
-      <span className="flex items-center gap-1.5 text-label-md text-error">
+      <span
+        className="flex items-center gap-1.5 text-label-md text-error"
+        title="The API is not responding."
+      >
         <span className="h-1.5 w-1.5 rounded-full bg-error" />
-        Backend unreachable
+        Offline
       </span>
     )
   }
 
+  const healthy = data.status === 'ok'
+  // Only services that are actually configured can be degraded — an unset
+  // Redis is a deployment choice, not a fault, and must not show as one.
+  const troubled = Object.entries(data.services)
+    .filter(([, s]) => s.status === 'degraded' || s.status === 'unavailable')
+    .map(([name]) => name)
+
   return (
-    <div className="flex items-center gap-3">
-      <span className="font-mono text-[11px] text-outline">
-        v{data.version} · {data.environment}
-      </span>
-      {Object.entries(data.services).map(([name, service]) => (
-        <span
-          key={name}
-          className="flex items-center gap-1.5 text-label-md text-on-surface-variant"
-          title={service.detail ?? undefined}
-        >
-          <span className={`h-1.5 w-1.5 rounded-full ${DOT[service.status]}`} />
-          {name}
-          <span className="font-normal normal-case tracking-normal text-outline">
-            {LABEL[service.status]}
-          </span>
-        </span>
-      ))}
-    </div>
+    <span
+      className={`flex items-center gap-1.5 text-label-md ${
+        healthy ? 'text-on-surface-variant' : 'text-data-amber'
+      }`}
+      title={
+        troubled.length
+          ? `Degraded: ${troubled.join(', ')}. See Settings for detail.`
+          : 'All services responding.'
+      }
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${
+          healthy ? 'bg-sql-syntax-string' : 'bg-data-amber'
+        }`}
+      />
+      {healthy ? 'Connected' : 'Degraded'}
+    </span>
   )
 }

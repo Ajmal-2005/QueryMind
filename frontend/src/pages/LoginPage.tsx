@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 
 import { login, register } from '@/api/auth'
 import { errorMessage } from '@/api/client'
-import { HealthBadge } from '@/components/HealthBadge'
 import { Icon } from '@/components/icons'
 import { Alert, Button, Field, IconButton, Input } from '@/components/ui'
 import { useAuthStore } from '@/stores/authStore'
@@ -193,10 +192,6 @@ export function LoginPage() {
               {mode === 'login' ? 'Create one' : 'Sign in'}
             </button>
           </p>
-
-          <div className="mt-10 flex justify-center border-t border-subtle pt-6">
-            <HealthBadge />
-          </div>
         </div>
       </section>
     </div>

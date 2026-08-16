@@ -6,6 +6,7 @@ import { AskPage } from '@/pages/AskPage'
 import { ConnectionsPage } from '@/pages/ConnectionsPage'
 import { DashboardsPage } from '@/pages/DashboardsPage'
 import { GlossaryPage } from '@/pages/GlossaryPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 import { LoginPage } from '@/pages/LoginPage'
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,14 @@ export default function App() {
         element={
           <Shell>
             <GlossaryPage />
+          </Shell>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <Shell>
+            <SettingsPage />
           </Shell>
         }
       />
