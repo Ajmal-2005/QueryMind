@@ -6,7 +6,8 @@ Data Analytics Platform** capstone ([`proposal.md`](proposal.md)).
 Written so a new session can pick this up cold. Read this file, then
 [`docs/phase-6.md`](docs/phase-6.md) for the most recent detail.
 
-**Status: Phases 0–6 complete. Phase 7 is the write-up.**
+**Status: Phases 0–7 complete.** Report, deck and demo runbook are in
+`docs/`.
 
 **The evaluation machinery is finished and has never produced an accuracy
 figure, because there is still no `ANTHROPIC_API_KEY`. One environment
@@ -96,7 +97,8 @@ blocker for Phase 4 except where noted.
 | `a9d3f05` | 3 — Validation gates, sandboxed execution, self-correction |
 | `d1330b8` | 4 — Analytics, visualization, dashboards, result cache |
 | `ebc8a36` | 5 — Conversation, corrections, glossary, semantic cache |
-| _this_ | 6 — Evaluation harness, ablations, taxonomy, RBAC, usage |
+| `f7a5ed2` | 6 — Evaluation harness, ablations, taxonomy, RBAC, usage |
+| _this_ | 7 — Final report, slide deck, demo runbook |
 
 **547 backend tests pass.** ruff clean, frontend builds and lints clean.
 
@@ -299,6 +301,7 @@ frontend/src/
                    GlossaryPage
   stores/          authStore  themeStore
 docs/              phase-0.md … phase-6.md
+                   final-report.md  slides.md  demo-script.md
 ```
 
 **`pipeline.run()` is the single entry point** for answering a question.
@@ -393,15 +396,12 @@ See [`docs/phase-5.md`](docs/phase-5.md).
 See [`docs/phase-6.md`](docs/phase-6.md). The machinery is complete; the
 numbers are not, and cannot be until an API key exists.
 
-### Phase 7 — Presentation (week 16)
+### Phase 7 — Presentation (week 16) — ✅ DONE
 
-Final report, slide deck, demo video, live demonstration.
-
-**For the report — be honest about these:**
-- `temperature=0` is not achievable on current models (§7 above).
-- Which embedder produced each number.
-- The stub-vs-real distinction in any measurement.
-- Docker/Postgres/pgvector paths that were never exercised.
+- [`docs/final-report.md`](docs/final-report.md) — the report
+- [`docs/slides.md`](docs/slides.md) — 16 slides with speaker notes
+- [`docs/demo-script.md`](docs/demo-script.md) — live runbook, likely
+  questions, and what to do when something breaks
 
 ---
 
