@@ -41,6 +41,13 @@ class Query(Base):
         String(36), nullable=True, index=True
     )
     question: Mapped[str] = mapped_column(Text)
+    resolved_question: Mapped[str | None] = mapped_column(Text, nullable=True)
+    """The question with follow-up context folded in.
+
+    Stored so a chain of follow-ups accumulates: turn three resolves against
+    turn two's *resolved* text, not the ellipsis the user typed. Reading back
+    `question` instead — which is what this did originally — silently dropped
+    everything before the previous turn."""
     generated_sql: Mapped[str | None] = mapped_column(Text, nullable=True)
     final_sql: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[QueryStatus] = mapped_column(

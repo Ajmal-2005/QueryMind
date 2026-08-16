@@ -409,6 +409,7 @@ def _persist(
         connection_id=connection.id,
         session_id=session_id,
         question=outcome.question,
+        resolved_question=outcome.intent.resolved_question,
         generated_sql=outcome.attempts[0].sql if outcome.attempts else None,
         # Only a query that actually ran becomes a few-shot example; a
         # syntactically valid one that failed would teach the wrong thing.

@@ -61,18 +61,16 @@ provenance panel lists the definition it applied.
 
 Returns a targeted question plus three clickable rewrites. Click one.
 
-**Multi-turn (F19)** — two turns, not three:
+**Multi-turn (F19)** — chains accumulate:
 
 > **What was total revenue by month?**
 > then **break that down by region**
+> then **just the north region**
 
-Resolves to *"What was total revenue by month?, grouped additionally by:
-region"* and the badge reads `follow-up`.
-
-⚠️ **Stop at two.** A third turn resolves against the raw previous question
-rather than the accumulated one, so "just the north region" loses the revenue
-context from two turns back. Session history stores the question as typed, not
-as resolved — see *Known gaps*. Demo two turns; it works cleanly.
+Turn three resolves to *"What was total revenue by month?, grouped
+additionally by: region, restricted to: the north region"* — it keeps the
+measure from turn one and the grouping from turn two. The badge reads
+`follow-up` from turn two onward.
 
 **Safety** — do **not** ask "delete all customers". The model correctly
 refuses to write one, so nothing is blocked and it looks like nothing

@@ -231,23 +231,6 @@ def _classify(question: str) -> QuestionType | None:
     return None
 
 
-def _is_vague(question: str, matched: QuestionType | None) -> bool:
-    """Is this question too underspecified to answer without guessing?
-
-    A question that matched an intent pattern is never vague on length
-    alone — "top 5 products" is only three words but says exactly what it
-    wants. The length check applies only when nothing matched, which is
-    where genuinely contentless input ("data?", "info") lands.
-    """
-    if _matches_any(question, VAGUE_PATTERNS):
-        return True
-    if matched is not None:
-        return False
-
-    words = [w for w in re.findall(r"[a-z0-9]+", question) if len(w) > 1]
-    return len(words) < MIN_MEANINGFUL_WORDS
-
-
 def _refinement_verb(question: str) -> tuple[str, str | None]:
     """How this follow-up modifies the previous question, and what said so."""
     for pattern, phrasing in REFINEMENTS:

@@ -36,7 +36,8 @@ additionally by: region"`. The instruction words are then stripped from the
 tail, so the model is told what to do once rather than twice.
 
 **Context accumulates.** The previous turn is the *resolved* question of that
-turn, so a chain keeps what came before it — "revenue last quarter" → "…by
+turn — persisted on `queries.resolved_question` — so a chain keeps what came
+before it — "revenue last quarter" → "…by
 region" → "…just the north" still carries the time window from two turns back.
 Time windows and limit hints are now read from the merged text for the same
 reason.

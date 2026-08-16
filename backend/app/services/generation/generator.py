@@ -22,13 +22,16 @@ def _recent_questions(db: Session, session_id: str | None, user_id: str) -> list
     if not session_id:
         return []
 
-    rows = db.scalars(
-        select(Query.question)
+    rows = db.execute(
+        select(Query.question, Query.resolved_question)
         .where(Query.session_id == session_id, Query.user_id == user_id)
         .order_by(Query.created_at.desc())
         .limit(HISTORY_TURNS)
     ).all()
-    return list(reversed(rows))
+    # The resolved text where there is one, so a chain accumulates rather than
+    # each turn seeing only the ellipsis before it. Rows written before this
+    # column existed fall back to the raw question.
+    return list(reversed([resolved or question for question, resolved in rows]))
 
 
 def _few_shot_examples(db: Session, connection_id: str) -> list[tuple[str, str]]:
