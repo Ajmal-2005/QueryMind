@@ -40,6 +40,10 @@ class ExecutionResult:
     duration_ms: float = 0.0
     error: str | None = None
 
+    cached: bool = False
+    """Served from the result cache. `duration_ms` is then the cache lookup,
+    not the query — reporting one as the other would flatter every benchmark."""
+
     @property
     def is_empty(self) -> bool:
         return self.ok and self.row_count == 0

@@ -1,6 +1,9 @@
 """Natural-language query endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+import re
+from datetime import datetime, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -11,6 +14,15 @@ from app.models.audit import AuditLog
 from app.models.connection import Connection, ConnectionStatus
 from app.models.query import Query
 from app.models.user import User
+from app.schemas.analytics import (
+    AnalysisRead,
+    CacheStatusRead,
+    ExportRequest,
+    InsightRequest,
+    NarrativeRead,
+    to_analysis_read,
+    to_narrative_read,
+)
 from app.schemas.query import (
     AttemptRead,
     ExecuteRequest,
@@ -21,7 +33,10 @@ from app.schemas.query import (
     RetrievedTableRead,
     ValidationRead,
 )
-from app.services.execution.runner import execute as run_sql
+from app.services.analytics import export as export_service
+from app.services.analytics.analyze import analyze
+from app.services.analytics.narrative import narrate
+from app.services.cache.results import cache_status, run_cached
 from app.services.generation import pipeline
 from app.services.validation.gates import validate
 
@@ -133,7 +148,12 @@ def execute_sql(
             error=failure.message,
         )
 
-    result = run_sql(connection, validation.sql)
+    result = run_cached(connection, validation.sql)
+    analysis = (
+        analyze(result.columns, result.rows, truncated=result.truncated)
+        if result.ok
+        else None
+    )
 
     return QueryResponse(
         query_id=None,
@@ -147,8 +167,186 @@ def execute_sql(
             limit_applied=validation.limit_applied,
         ),
         result=_result_read(result),
+        analysis=to_analysis_read(analysis) if analysis else None,
         error=result.error,
     )
+
+
+def _validated_result(payload_sql: str, connection: Connection, db: Session):
+    """Run SQL through the gates and return (validated_sql, result).
+
+    Every path that executes SQL on behalf of a client goes through here, so
+    an export and a narrative are gated exactly as tightly as a query. A
+    request that names a connection the caller owns still cannot smuggle a
+    write past the safety gate by asking for it as a CSV.
+    """
+    index = pipeline.build_schema_index(db, connection.id)
+    validation = validate(
+        payload_sql, connection.dialect, index, max_rows=settings.MAX_RESULT_ROWS
+    )
+    if not validation.ok:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Blocked by the {validation.failure.gate.value} gate: "
+            f"{validation.failure.message}",
+        )
+
+    result = run_cached(connection, validation.sql)
+    if not result.ok:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=result.error
+        )
+    return validation.sql, result
+
+
+@router.post(
+    "/insight",
+    response_model=NarrativeRead,
+    summary="Write a plain-English summary of a result",
+)
+def insight(
+    payload: InsightRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> NarrativeRead:
+    """Summarise a result set in prose (F13).
+
+    Separate from `/query` on purpose: this is the one analytics step that
+    costs an LLM call, and holding the table and chart back while waiting on
+    prose would make the product feel slower than it is. The UI renders the
+    result first and fills this in when it lands.
+
+    The rows are re-fetched here rather than posted up by the client — the
+    server will not narrate data it has not read out of the database itself.
+    """
+    connection = _owned_connection(payload.connection_id, db, user)
+    _require_indexed(connection)
+
+    if not settings.NARRATIVE_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Narrative generation is disabled on this deployment.",
+        )
+
+    sql, result = _validated_result(payload.sql, connection, db)
+    analysis = analyze(result.columns, result.rows, truncated=result.truncated)
+    narrative = narrate(payload.question, sql, analysis, result.rows)
+
+    db.add(
+        AuditLog(
+            user_id=user.id,
+            action="query.insight",
+            payload={
+                "connection_id": connection.id,
+                "narrator": narrative.model,
+                "rows_summarised": result.row_count,
+                # The security model asks for evidence that masking ran, not
+                # just that it was configured.
+                "masked_columns": narrative.masking.column_names,
+                "values_masked": narrative.masking.values_masked,
+            },
+        )
+    )
+    db.commit()
+
+    return to_narrative_read(narrative)
+
+
+@router.post("/analyze", response_model=AnalysisRead, summary="Profile a result set")
+def analyze_sql(
+    payload: InsightRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> AnalysisRead:
+    """Re-profile a query without generating anything.
+
+    Used when a dashboard tile or a saved query needs its chart and statistics
+    back without paying for narration.
+    """
+    connection = _owned_connection(payload.connection_id, db, user)
+    _require_indexed(connection)
+
+    _, result = _validated_result(payload.sql, connection, db)
+    return to_analysis_read(
+        analyze(result.columns, result.rows, truncated=result.truncated)
+    )
+
+
+def _filename(title: str, extension: str) -> str:
+    """A safe download name.
+
+    Quoted in a Content-Disposition header, so anything that could break out
+    of the quoting — or out of the directory — is stripped rather than escaped.
+    """
+    cleaned = re.sub(r"[^\w\-. ]+", "", title).strip().replace(" ", "-")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")
+    return f"{(cleaned or 'query-result')[:60]}-{stamp}.{extension}"
+
+
+@router.post("/export", summary="Download a result as CSV, JSON, Excel, or PDF")
+def export(
+    payload: ExportRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> Response:
+    """Serialise a result set for download (F17).
+
+    PNG is absent by design: the chart is an SVG that only exists in the
+    browser, and the browser saves it directly. Re-drawing it here would mean
+    a second charting implementation that could disagree with what the user
+    saw.
+    """
+    connection = _owned_connection(payload.connection_id, db, user)
+    _require_indexed(connection)
+
+    sql, result = _validated_result(payload.sql, connection, db)
+    fmt = export_service.ExportFormat(payload.format)
+
+    context = export_service.ReportContext(
+        title=payload.title,
+        question=payload.question,
+        sql=sql,
+    )
+
+    if fmt is export_service.ExportFormat.PDF:
+        analysis = analyze(result.columns, result.rows, truncated=result.truncated)
+        context.analysis = analysis
+        context.chart_png = export_service.decode_chart_image(payload.chart_png)
+
+        if payload.include_narrative and settings.NARRATIVE_ENABLED:
+            narrative = narrate(payload.question, sql, analysis, result.rows)
+            context.headline = narrative.headline
+            context.summary = narrative.summary
+            context.findings = narrative.findings
+            context.narrator = narrative.model
+
+    body = export_service.render(fmt, result.columns, result.rows, context)
+
+    db.add(
+        AuditLog(
+            user_id=user.id,
+            action="query.export",
+            payload={
+                "connection_id": connection.id,
+                "format": fmt.value,
+                "rows": result.row_count,
+                "bytes": len(body),
+            },
+        )
+    )
+    db.commit()
+
+    name = _filename(payload.title, fmt.value)
+    return Response(
+        content=body,
+        media_type=export_service.MEDIA_TYPES[fmt],
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
+
+
+@router.get("/cache", response_model=CacheStatusRead, summary="Result cache statistics")
+def cache(user: User = Depends(get_current_user)) -> CacheStatusRead:
+    return CacheStatusRead(**cache_status())
 
 
 @router.get(
@@ -189,6 +387,7 @@ def _result_read(result) -> ResultRead | None:
         row_count=result.row_count,
         truncated=result.truncated,
         duration_ms=round(result.duration_ms, 1),
+        cached=result.cached,
     )
 
 
@@ -242,6 +441,7 @@ def _to_response(outcome: pipeline.QueryOutcome) -> QueryResponse:
         generation=generation,
         validation=validation,
         result=_result_read(outcome.execution),
+        analysis=to_analysis_read(outcome.analysis) if outcome.analysis else None,
         attempts=[
             AttemptRead(
                 number=a.number,

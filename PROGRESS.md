@@ -4,9 +4,9 @@ Continuation notes for the **AI-Based Natural Language Query Processing and
 Data Analytics Platform** capstone ([`proposal.md`](proposal.md)).
 
 Written so a new session can pick this up cold. Read this file, then
-[`docs/phase-3.md`](docs/phase-3.md) for the most recent detail.
+[`docs/phase-4.md`](docs/phase-4.md) for the most recent detail.
 
-**Status: Phases 0–3 complete. Phase 4 is next.**
+**Status: Phases 0–4 complete. Phase 5 is next.**
 
 ---
 
@@ -74,6 +74,7 @@ cd frontend && npm run lint && npm run build
 | **No Docker** | Postgres, pgvector, and Redis have never run. App uses SQLite; embeddings stored as JSON. |
 | **Python 3.10.9** (proposal says 3.11+) | Code is 3.10-compatible; Docker image pins 3.11. |
 | **Spider/BIRD not downloaded** | Only the committed 10-question custom set is available to the harness. |
+| **No Pandas/NumPy** | Despite what an earlier draft of this file said, they were never installed. Phase 4 profiling uses the stdlib `statistics` module instead — a deliberate deviation from the proposal's stack, documented in [`docs/phase-4.md`](docs/phase-4.md). |
 
 Everything above is written and wired but unexercised. None of it is a
 blocker for Phase 4 except where noted.
@@ -89,8 +90,9 @@ blocker for Phase 4 except where noted.
 | `e1ea432` | UI rebuild on the Stitch design system |
 | `b639206` | 2 — NL→SQL core: intent, hybrid retrieval, generation |
 | `a9d3f05` | 3 — Validation gates, sandboxed execution, self-correction |
+| _this_ | 4 — Analytics, visualization, dashboards, result cache |
 
-**344 backend tests pass.** ruff clean, frontend builds clean.
+**460 backend tests pass.** ruff clean, frontend builds and lints clean.
 
 ---
 
@@ -157,15 +159,43 @@ runner).
 rejections, plus independent confirmation that the connection itself refuses
 writes.
 
+### Phase 4 — Analytics & Visualization ✅ (narrative LLM path never run)
+
+- **Profiling** (F14): type inference from *values*, not declared types —
+  SQLite returns dates as strings. Every column records how it was classified.
+  Chart selection, outliers and trends all read the profile, never the rows.
+- **Chart selection** (F11): ordered rules, first match wins, each carrying
+  the sentence that produced it. Table is the floor — never wrong, only less
+  illuminating.
+- **Manual override** (F12): type and axis pickers, populated from the same
+  profile so the two cannot disagree about what counts as a category.
+- **Outliers** (F15): IQR *and* z-score, with which methods agreed reported.
+- **Trends** (F16): least-squares direction, deltas, growth rates, trailing
+  moving average. Declines with a reason when the result is not a series.
+- **PII masking**: column-name *and* value-pattern detection, applied at the
+  boundary — including the profile's own sample values, which is where the
+  first implementation leaked.
+- **Narrative** (F13): the model gets exact statistics plus 20 masked rows,
+  never raw data to add up. `TemplateNarrator` writes a real summary offline.
+- **Export** (F17): CSV/JSON/XLSX/PDF server-side; PNG from the browser's own
+  SVG.
+- **Dashboards** (F18): tiles store validated SQL, re-validated and re-run on
+  every open. One broken tile does not fail the refresh.
+- **Result cache**: Redis or in-process, keyed on validated SQL, `cached: true`
+  on every hit so no benchmark can misread it.
+
+**Milestone gate met**: every query returns a table, an appropriate chart, and
+a written summary — confirmed in the running app.
+
 ---
 
 ## 6. Layout
 
 ```
 backend/app/
-  api/v1/          auth.py  connections.py  health.py  query.py
+  api/v1/          auth.py  connections.py  dashboards.py  health.py  query.py
   core/            config  crypto  database  logging  security
-  models/          user  connection  query  schema_index  audit
+  models/          user  connection  query  schema_index  audit  dashboard
   schemas/         Pydantic contracts
   services/
     connection/    manager.py       — URLs, credentials, engines
@@ -182,16 +212,28 @@ backend/app/
                    generator.py     — session history + few-shot lookups only
     validation/    gates.py         — the four gates
     execution/     runner.py        — sandboxed execution, EXPLAIN
-    analytics/     EMPTY — Phase 4 goes here
+    analytics/     profile.py       — type inference + descriptive stats (F14)
+                   charts.py        — rule-based chart selection (F11/F12)
+                   outliers.py      — IQR + z-score (F15)
+                   trends.py        — deltas, growth, moving average (F16)
+                   masking.py       — PII masking on the outbound path
+                   narrative.py     — LLM summary + offline template narrator (F13)
+                   export.py        — CSV / JSON / XLSX / PDF (F17)
+                   analyze.py       — composes the four local steps
+    cache/         store.py         — Redis / in-process / null backends
+                   results.py       — cached execution, invalidation
   workers/         EMPTY — Celery, Phase 6
 backend/evaluation/  datasets  metrics  runner (predictor slot still a stub)
 frontend/src/
-  api/             typed client (client, auth, health, connections, query)
+  api/             typed client (client, auth, health, connections, query,
+                   analytics, dashboards)
   components/      AppShell  ui.tsx  icons.tsx  SqlBlock  ResultTable
                    SchemaExplorer  AddConnectionForm  HealthBadge
-  pages/           LoginPage  ConnectionsPage  AskPage
+                   ChartView  ChartControls  ProfilePanel  InsightPanel
+                   ExportMenu  PinToDashboard  ResultView
+  pages/           LoginPage  ConnectionsPage  AskPage  DashboardsPage
   stores/          authStore  themeStore
-docs/              phase-0.md … phase-3.md
+docs/              phase-0.md … phase-4.md
 ```
 
 **`pipeline.run()` is the single entry point** for answering a question.
@@ -214,6 +256,12 @@ docs/              phase-0.md … phase-3.md
 | **Stub provider rather than hard failure** | Pipeline/API/UI exercisable offline. Stub is loud: confidence 0, explicit assumption, model name `stub`. |
 | **Manual SQL uses identical gates** | Hand-edited SQL is *less* trusted — it never passed through a prompt forbidding writes. |
 | **Only executed queries become few-shot examples** | A valid query that failed at runtime teaches the wrong thing. |
+| **Stdlib `statistics`, not Pandas/NumPy** | The proposal's stack names them; the honest cost/benefit did not justify a 50 MB dependency for ~100 lines of arithmetic over ≤10,000 rows, and type inference had to be hand-written regardless. **Must be stated in the final report.** |
+| **Chart selection is rule-based, like intent** | Fully determined by result shape; an LLM call would cost more than the whole analytics stage, and a wrong choice is one click from fixed. |
+| **The narrator is given statistics, not raw rows** | Every number in a summary traces to arithmetic this process did, not to a model's mental addition of a partial sample. |
+| **PII masking applies at the boundary, not to one object** | Learned the hard way: the first implementation masked the sample rows but not the profile's own top values, and leaked names into the prompt. |
+| **Dashboard tiles store SQL, not questions** | Re-asking on open would re-run generation, cost tokens each time, and could return a different query than the user pinned. |
+| **Cached results are labelled `cached`** | A 2 ms cache hit reported as query latency would flatter every benchmark in the final report. |
 
 ---
 
@@ -227,51 +275,28 @@ docs/              phase-0.md … phase-3.md
    not wired into it.
 
 **Written but never executed:**
-4. Anthropic client (no live call ever made).
+4. Anthropic client (no live call ever made) — now *two* of them: the SQL
+   generator and Phase 4's `AnthropicNarrator`. Every narrative so far came
+   from the template narrator.
 5. Postgres/MySQL: introspection, execution, session guards, `pgvector`.
 6. Docker Compose stack.
 7. Statement timeout (no test forces a slow enough query).
+8. `RedisCache` — written in Phase 4, exercised only as `MemoryCache`.
 
 **Scoped but not built:**
-8. **Redis result caching** — was Phase 3 scope, deferred rather than
-   half-built.
-9. `EXPLAIN`-based cost estimation — `explain()` exists and is tested, but
+8. `EXPLAIN`-based cost estimation — `explain()` exists and is tested, but
    the cost gate only enforces a row cap.
-10. OpenAI GPT-5 as secondary provider (A/B + failover).
-11. Retrieval at scale — demo schema has 8 tables; nothing establishes recall
+9. OpenAI GPT-5 as secondary provider (A/B + failover).
+10. Retrieval at scale — demo schema has 8 tables; nothing establishes recall
     at 400.
 
 ---
 
 ## 9. Remaining phases
 
-### Phase 4 — Analytics & Visualization (weeks 10–11)
+### Phase 4 — Analytics & Visualization (weeks 10–11) — ✅ DONE
 
-Build in `services/analytics/` (currently empty).
-
-- **F14 Statistical profiling** — row count, column types, cardinality, null
-  density. Pandas/NumPy already in `requirements.txt`.
-- **F11 Chart selection** — rule-based from result shape: time column → line;
-  one categorical ≤15 values → bar; two numerics → scatter; single scalar →
-  KPI card; else table.
-- **F12 Manual chart override** — user switches type, axes, aggregation.
-- **F15 Outlier detection** — IQR and z-score, visually highlighted.
-- **F16 Trend analysis** — period-over-period deltas, growth rates, moving
-  averages.
-- **F13 Narrative insight** — pass profile + data sample to the LLM for a
-  2–3 sentence summary. *Add PII masking before the sample leaves the box —
-  the proposal lists this under the security model.*
-- **F17 Export** — CSV, Excel, JSON, PNG, PDF.
-- **F18 Dashboard builder** — pin queries, refresh on open.
-
-Frontend needs Recharts (`npm i recharts`) — not yet installed. The Stitch
-design system has a Dashboards screen already designed; the nav item is
-stubbed with a `P4` badge in `AppShell.tsx`.
-
-**Also do here:** the Redis cache deferred from Phase 3.
-
-*Deliverable: every query returns a table, an appropriate chart, and a
-written summary.*
+See [`docs/phase-4.md`](docs/phase-4.md).
 
 ### Phase 5 — Conversation & Learning (weeks 12–13)
 
@@ -325,15 +350,17 @@ Final report, slide deck, demo video, live demonstration.
 
 1. **Set `ANTHROPIC_API_KEY`** in `backend/.env`. This unblocks more than
    anything else — first live Anthropic call, first real translation, first
-   measurable accuracy, and the correction recovery rate for research
-   question 2.
-2. **Install Docker Desktop**, bring up
-   `docker/docker-compose.yml`, and re-run the suite against Postgres. Needed
-   before any claim about pgvector or the 200-table indexing milestone.
-3. **Start Phase 4** in `services/analytics/`.
+   measurable accuracy, the correction recovery rate for research question 2,
+   and now the first genuine narrative, which is also the only way to confirm
+   the PII masking layer behaves on a live outbound call.
+2. **Install Docker Desktop**, bring up `docker/docker-compose.yml`, and
+   re-run the suite against Postgres and Redis. Needed before any claim about
+   pgvector, the 200-table indexing milestone, or the result cache.
+3. **Start Phase 5** — multi-turn, ambiguity, explanation UI, learning from
+   corrections. It extends `intent.py` and `generator.py`, neither of which
+   Phase 4 touched.
 
-None of these blocks the others. (1) gives you real numbers; (2) closes the
-biggest unverified surface; (3) is the next feature phase.
+None of these blocks the others.
 
 ---
 

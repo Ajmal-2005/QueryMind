@@ -7,6 +7,7 @@ import { askQuestion } from '@/api/query'
 import type { Connection, QueryResponse, QuestionType } from '@/api/types'
 import { Icon } from '@/components/icons'
 import { ResultTable } from '@/components/ResultTable'
+import { ResultView } from '@/components/ResultView'
 import { SqlBlock } from '@/components/SqlBlock'
 import { Alert, EmptyState, Pill, Select, Spinner } from '@/components/ui'
 
@@ -150,7 +151,7 @@ export function AskPage() {
         )}
 
         {turns.map((turn) => (
-          <TurnView key={turn.id} turn={turn} />
+          <TurnView key={turn.id} turn={turn} connectionId={connectionId} />
         ))}
 
         {ask.isPending && (
@@ -200,7 +201,13 @@ export function AskPage() {
   )
 }
 
-function TurnView({ turn }: { turn: Turn }) {
+function TurnView({
+  turn,
+  connectionId,
+}: {
+  turn: Turn
+  connectionId: string
+}) {
   const { response } = turn
 
   return (
@@ -276,7 +283,19 @@ function TurnView({ turn }: { turn: Turn }) {
                 {response.generation.explanation}
               </p>
 
-              {response.result && <ResultTable result={response.result} />}
+              {response.result &&
+                (response.analysis ? (
+                  <ResultView
+                    result={response.result}
+                    analysis={response.analysis}
+                    connectionId={connectionId}
+                    sql={response.validation?.sql || response.generation.sql}
+                    question={response.question}
+                    queryId={response.query_id}
+                  />
+                ) : (
+                  <ResultTable result={response.result} />
+                ))}
 
               <SqlBlock sql={response.validation?.sql || response.generation.sql} />
 

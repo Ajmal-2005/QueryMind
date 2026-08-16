@@ -53,6 +53,18 @@ class Settings(BaseSettings):
     MAX_RESULT_ROWS: int = 10_000
     MAX_CORRECTION_ATTEMPTS: int = 3
 
+    # --- result cache (phase 4) ---
+    # Uses Redis when REDIS_URL is set, an in-process TTL map otherwise. Short
+    # by design: every cached entry is a read that may already be stale.
+    CACHE_ENABLED: bool = True
+    CACHE_TTL_SECONDS: int = 300
+
+    # --- analytics (phase 4) ---
+    # Narrative generation sends a masked sample of rows to the LLM provider.
+    # Turning this off keeps every row inside the deployment; the profile,
+    # chart, outliers and trend are computed locally and are unaffected.
+    NARRATIVE_ENABLED: bool = True
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:

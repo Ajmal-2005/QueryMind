@@ -4,6 +4,7 @@ import { AppShell } from '@/components/AppShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AskPage } from '@/pages/AskPage'
 import { ConnectionsPage } from '@/pages/ConnectionsPage'
+import { DashboardsPage } from '@/pages/DashboardsPage'
 import { LoginPage } from '@/pages/LoginPage'
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -31,6 +32,14 @@ export default function App() {
         element={
           <Shell>
             <ConnectionsPage />
+          </Shell>
+        }
+      />
+      <Route
+        path="/dashboards"
+        element={
+          <Shell>
+            <DashboardsPage />
           </Shell>
         }
       />

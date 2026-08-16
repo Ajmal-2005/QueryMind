@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.schemas.analytics import AnalysisRead
 from app.services.generation.intent import QuestionType
 
 
@@ -57,6 +58,9 @@ class ResultRead(BaseModel):
     row_count: int
     truncated: bool
     duration_ms: float
+    cached: bool = False
+    """Served from a recent identical run. `duration_ms` is then the cache
+    lookup rather than the query."""
 
 
 class AttemptRead(BaseModel):
@@ -86,6 +90,9 @@ class QueryResponse(BaseModel):
     generation: GenerationRead | None = None
     validation: ValidationRead | None = None
     result: ResultRead | None = None
+    analysis: AnalysisRead | None = None
+    """Profile, recommended chart, outliers and trend. Present whenever rows
+    came back; the written summary is fetched separately from /query/insight."""
 
     attempts: list[AttemptRead] = []
     correction_attempts: int = 0

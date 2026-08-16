@@ -157,6 +157,7 @@ export interface ResultSet {
   row_count: number
   truncated: boolean
   duration_ms: number
+  cached: boolean
 }
 
 export interface Attempt {
@@ -178,6 +179,7 @@ export interface QueryResponse {
   generation: Generation | null
   validation: ValidationInfo | null
   result: ResultSet | null
+  analysis: Analysis | null
   attempts: Attempt[]
   correction_attempts: number
   recovered_by_correction: boolean
@@ -185,4 +187,195 @@ export interface QueryResponse {
   embedder: string | null
   error: string | null
   timings_ms: Record<string, number>
+}
+
+/* ------------------------------------------------------- analytics (phase 4) */
+
+export type ChartType = 'line' | 'bar' | 'pie' | 'scatter' | 'kpi' | 'table'
+
+export type ColumnKind =
+  | 'numeric'
+  | 'temporal'
+  | 'categorical'
+  | 'boolean'
+  | 'text'
+  | 'empty'
+
+export type ExportFormat = 'csv' | 'json' | 'xlsx' | 'pdf'
+
+export interface TopValue {
+  value: string
+  count: number
+  fraction: number
+}
+
+export interface ColumnProfile {
+  name: string
+  kind: ColumnKind
+  inferred_from: string
+  count: number
+  null_count: number
+  null_fraction: number
+  distinct_count: number
+  minimum: number | null
+  maximum: number | null
+  mean: number | null
+  median: number | null
+  stddev: number | null
+  q1: number | null
+  q3: number | null
+  earliest: string | null
+  latest: string | null
+  top_values: TopValue[]
+}
+
+export interface ResultProfile {
+  row_count: number
+  column_count: number
+  truncated: boolean
+  columns: ColumnProfile[]
+}
+
+export interface ChartSpec {
+  type: ChartType
+  reason: string
+  x: string | null
+  y: string[]
+  series: string | null
+  alternatives: ChartType[]
+}
+
+export interface Outlier {
+  row_index: number
+  column: string
+  value: number
+  methods: string[]
+  z_score: number | null
+  iqr_distance: number | null
+}
+
+export interface ColumnOutliers {
+  column: string
+  checked: boolean
+  reason: string
+  iqr_count: number
+  zscore_count: number
+  agreed_count: number
+  lower_fence: number | null
+  upper_fence: number | null
+}
+
+export interface OutlierReport {
+  total: number
+  truncated: boolean
+  columns: ColumnOutliers[]
+  outliers: Outlier[]
+}
+
+export interface TrendPoint {
+  period: string
+  value: number
+  delta: number | null
+  growth_rate: number | null
+  moving_average: number | null
+}
+
+export interface Trend {
+  period_column: string
+  value_column: string
+  direction: 'rising' | 'falling' | 'flat'
+  summary: string
+  window: number
+  first_value: number
+  last_value: number
+  total_change: number
+  total_growth_rate: number | null
+  average_growth_rate: number | null
+  best_period: string | null
+  worst_period: string | null
+  points: TrendPoint[]
+}
+
+export interface Analysis {
+  profile: ResultProfile
+  chart: ChartSpec
+  outliers: OutlierReport
+  trend: Trend | null
+  trend_unavailable: string | null
+  options: Record<string, string[]>
+  duration_ms: number
+}
+
+export interface MaskedColumn {
+  column: string
+  rule: string
+  detected_as: string
+  values_masked: number
+}
+
+export interface Narrative {
+  headline: string
+  summary: string
+  findings: string[]
+  model: string
+  input_tokens: number
+  output_tokens: number
+  latency_ms: number
+  masked_columns: MaskedColumn[]
+}
+
+export interface CacheStatus {
+  backend: string
+  hits: number
+  misses: number
+  writes: number
+  errors: number
+  hit_rate: number
+  ttl_seconds: number
+}
+
+/* ------------------------------------------------------ dashboards (phase 4) */
+
+export interface Dashboard {
+  id: string
+  name: string
+  description: string | null
+  layout: Record<string, unknown>
+  tile_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface DashboardTile {
+  id: string
+  title: string
+  connection_id: string | null
+  connection_name: string | null
+  question: string | null
+  sql: string
+  chart: Partial<ChartSpec>
+  position: number
+  created_at: string
+}
+
+export interface DashboardDetail extends Dashboard {
+  tiles: DashboardTile[]
+}
+
+export interface TileResult {
+  tile_id: string
+  ok: boolean
+  result: ResultSet | null
+  analysis: Analysis | null
+  chart: ChartSpec | null
+  validation: ValidationInfo | null
+  cached: boolean
+  error: string | null
+}
+
+export interface DashboardRefresh {
+  dashboard_id: string
+  refreshed_at: string
+  tiles: TileResult[]
+  duration_ms: number
 }

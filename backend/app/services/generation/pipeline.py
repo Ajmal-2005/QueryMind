@@ -26,7 +26,10 @@ from app.core.logging import get_logger
 from app.models.connection import Connection
 from app.models.query import Query, QueryStatus
 from app.models.schema_index import SchemaTable
-from app.services.execution.runner import ExecutionResult, execute
+from app.services.analytics.analyze import Analysis
+from app.services.analytics.analyze import analyze as analyze_result
+from app.services.cache.results import run_cached
+from app.services.execution.runner import ExecutionResult
 from app.services.generation import prompts
 from app.services.generation.generator import _few_shot_examples, _recent_questions
 from app.services.generation.intent import Intent, analyze
@@ -66,6 +69,9 @@ class QueryOutcome:
     generation: Generation | None = None
     validation: ValidationResult | None = None
     execution: ExecutionResult | None = None
+    analysis: Analysis | None = None
+    """Profile, chart, outliers and trend. Only ever set on a successful run —
+    there is nothing to profile about a rejected or failed query."""
 
     attempts: list[Attempt] = field(default_factory=list)
     rejected: bool = False
@@ -207,7 +213,7 @@ def run(
             continue
 
         stage = time.perf_counter()
-        execution = execute(connection, validation.sql)
+        execution = run_cached(connection, validation.sql)
         execution_ms += (time.perf_counter() - stage) * 1000
 
         attempt.execution = execution
@@ -222,11 +228,25 @@ def run(
         outcome.error = execution.error
         previous_sql, feedback = validation.sql, execution.error
 
+    # Profiling, chart selection, outliers and trend. All local arithmetic, so
+    # it runs inline; the narrative is the one analytics step that costs an API
+    # call and it has its own endpoint.
+    analysis_ms = 0.0
+    if outcome.succeeded and outcome.execution is not None:
+        stage = time.perf_counter()
+        outcome.analysis = analyze_result(
+            outcome.execution.columns,
+            outcome.execution.rows,
+            truncated=outcome.execution.truncated,
+        )
+        analysis_ms = (time.perf_counter() - stage) * 1000
+
     outcome.stage_timings = {
         "intent": round(intent_ms, 1),
         "retrieval": round(retrieval_ms, 1),
         "generation": round(generation_ms, 1),
         "execution": round(execution_ms, 1),
+        "analysis": round(analysis_ms, 1),
         "total": round((time.perf_counter() - started) * 1000, 1),
     }
 

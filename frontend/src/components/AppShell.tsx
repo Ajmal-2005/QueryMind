@@ -19,7 +19,7 @@ const NAV: NavEntry[] = [
   { icon: 'terminal', label: 'Ask', to: '/ask' },
   { icon: 'cloud_sync', label: 'Connections', to: '/connections' },
   { icon: 'history', label: 'History', phase: '5' },
-  { icon: 'dashboard', label: 'Dashboards', phase: '4' },
+  { icon: 'dashboard', label: 'Dashboards', to: '/dashboards' },
   { icon: 'settings', label: 'Settings', phase: '6' },
 ]
 

@@ -18,6 +18,7 @@ from app.schemas.connection import (
     IndexResponse,
 )
 from app.schemas.schema_index import SchemaGraphEdge, SchemaResponse, TableRead
+from app.services.cache.results import invalidate_connection
 from app.services.connection.manager import (
     Credentials,
     check_connection,
@@ -157,6 +158,10 @@ def index(
     """
     connection = _owned_connection(connection_id, db, user)
 
+    # Re-indexing means the schema moved. Results cached against the old shape
+    # must not outlive it.
+    invalidate_connection(connection.id)
+
     try:
         result = index_connection(db, connection)
     except Exception as exc:  # noqa: BLE001 - any failure must be recorded
@@ -239,6 +244,7 @@ def delete_connection(
     user: User = Depends(get_current_user),
 ) -> None:
     connection = _owned_connection(connection_id, db, user)
+    invalidate_connection(connection.id)
 
     # Remove the index explicitly; SQLite does not enforce ON DELETE CASCADE
     # unless foreign keys are switched on per connection.
