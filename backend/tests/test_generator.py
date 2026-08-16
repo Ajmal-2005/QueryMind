@@ -141,3 +141,60 @@ def test_a_failed_query_does_not_become_an_example(db, indexed) -> None:
     _run(db, indexed, client, question="How many orders?")
 
     assert "Examples of correct SQL" not in client.calls[0].user
+
+
+def test_history_returns_resolved_questions_so_chains_accumulate(db, indexed) -> None:
+    """Turn three must see turn two's *resolved* text, not the ellipsis typed.
+
+    Reading `Query.question` back instead — which is what this did originally —
+    silently dropped everything before the previous turn.
+    """
+    from app.models.query import Query, QueryStatus
+    from app.services.generation.generator import _recent_questions
+    from app.services.generation.intent import analyze
+
+    db.add(
+        Query(
+            user_id=indexed.user_id,
+            connection_id=indexed.id,
+            session_id="chain",
+            question="break that down by region",
+            resolved_question=(
+                "What was total revenue by month?, grouped additionally by: region"
+            ),
+            status=QueryStatus.EXECUTED,
+            final_sql="SELECT 1",
+        )
+    )
+    db.commit()
+
+    history = _recent_questions(db, "chain", indexed.user_id)
+    assert history == [
+        "What was total revenue by month?, grouped additionally by: region"
+    ]
+
+    third = analyze("just the north region", history)
+    assert "total revenue by month" in third.resolved_question
+    assert "region" in third.resolved_question
+    assert "the north region" in third.resolved_question
+
+
+def test_history_falls_back_to_the_raw_question_for_older_rows(db, indexed) -> None:
+    """Rows written before the column existed have no resolved text."""
+    from app.models.query import Query, QueryStatus
+    from app.services.generation.generator import _recent_questions
+
+    db.add(
+        Query(
+            user_id=indexed.user_id,
+            connection_id=indexed.id,
+            session_id="legacy",
+            question="revenue by month",
+            resolved_question=None,
+            status=QueryStatus.EXECUTED,
+            final_sql="SELECT 1",
+        )
+    )
+    db.commit()
+
+    assert _recent_questions(db, "legacy", indexed.user_id) == ["revenue by month"]

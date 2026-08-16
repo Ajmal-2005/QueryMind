@@ -36,11 +36,16 @@ additionally by: region"`. The instruction words are then stripped from the
 tail, so the model is told what to do once rather than twice.
 
 **Context accumulates.** The previous turn is the *resolved* question of that
-turn — persisted on `queries.resolved_question` — so a chain keeps what came
-before it — "revenue last quarter" → "…by
-region" → "…just the north" still carries the time window from two turns back.
-Time windows and limit hints are now read from the merged text for the same
-reason.
+turn, persisted on `queries.resolved_question`, so a chain keeps what came
+before it: "revenue last quarter" → "…by region" → "…just the north" still
+carries the time window from two turns back. Time windows and limit hints are
+read from the merged text for the same reason.
+
+*This was claimed here before it was true.* The original implementation read
+`Query.question` — the text as typed — so the third turn resolved against the
+raw second turn and dropped the first. Found by running a three-turn chain
+against the live app in Phase 7 and reading the resolved text, not by any
+test. The column, and a test that fails without it, arrived then.
 
 ### F20 — Targeted clarification
 
