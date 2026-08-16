@@ -96,3 +96,63 @@ def test_scripted_client_records_the_prompts_it_saw() -> None:
 def test_get_client_falls_back_to_the_stub_without_a_key() -> None:
     # No ANTHROPIC_API_KEY is configured in the test environment.
     assert get_client().name == "stub"
+
+
+# --------------------------------------------------- provider failover
+
+
+def test_failover_moves_to_the_next_provider_on_failure() -> None:
+    """A valid key with no quota returns 429 — indistinguishable from an
+    outage at the call site, and equally fatal to a demo."""
+    from app.services.generation.llm import FailoverClient, LLMError
+
+    broken = ScriptedClient([LLMError("429 insufficient_quota")])
+    working = ScriptedClient([{"sql": "SELECT 1", "confidence": 0.9}])
+
+    generation = FailoverClient([broken, working]).generate(PROMPT)
+    assert generation.sql == "SELECT 1"
+
+
+def test_failover_reports_the_provider_that_actually_answered() -> None:
+    from app.services.generation.llm import FailoverClient, LLMError, StubClient
+
+    client = FailoverClient([ScriptedClient([LLMError("down")]), StubClient()])
+    client.generate(PROMPT)
+    assert client.name == "stub"
+
+
+def test_falling_through_to_the_stub_says_why() -> None:
+    """The stub's own wording blames a missing key. Here one was configured
+    and failed, and the assumption must say so."""
+    from app.services.generation.llm import FailoverClient, LLMError, StubClient
+
+    generation = FailoverClient(
+        [ScriptedClient([LLMError("429 insufficient_quota")]), StubClient()]
+    ).generate(PROMPT)
+
+    assumption = " ".join(generation.assumptions)
+    assert "could not be reached" in assumption
+    assert "insufficient_quota" in assumption
+    assert "not a real translation" in assumption
+
+
+def test_every_provider_failing_raises() -> None:
+    from app.services.generation.llm import FailoverClient, LLMError
+
+    client = FailoverClient(
+        [ScriptedClient([LLMError("a")]), ScriptedClient([LLMError("b")])]
+    )
+    with pytest.raises(LLMError, match="Every provider failed"):
+        client.generate(PROMPT)
+
+
+def test_a_healthy_first_provider_is_not_bypassed() -> None:
+    from app.services.generation.llm import FailoverClient
+
+    second = ScriptedClient([{"sql": "SELECT 2", "confidence": 1}])
+    client = FailoverClient(
+        [ScriptedClient([{"sql": "SELECT 1", "confidence": 1}]), second]
+    )
+
+    assert client.generate(PROMPT).sql == "SELECT 1"
+    assert second.calls == []  # never consulted

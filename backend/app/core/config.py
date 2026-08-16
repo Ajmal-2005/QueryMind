@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     # --- llm providers (unused in phase 0, wired in phase 2) ---
     ANTHROPIC_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
+    OPENAI_MODEL: str = "gpt-4.1"
+    GEMINI_API_KEY: str | None = None
 
     # --- execution guardrails (phase 3) ---
     QUERY_TIMEOUT_SECONDS: int = 30

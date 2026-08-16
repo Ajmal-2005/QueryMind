@@ -16,7 +16,6 @@ import math
 import re
 from typing import Protocol, runtime_checkable
 
-from app.core.config import settings
 from app.core.logging import get_logger
 from app.models.schema_index import EMBEDDING_DIM
 
@@ -119,10 +118,9 @@ class OpenAIEmbedder:
 
 def get_embedder() -> Embedder:
     """Pick the embedder from configuration."""
-    if settings.OPENAI_API_KEY:
-        return OpenAIEmbedder(settings.OPENAI_API_KEY)
-
-    log.info("using_local_embedder", reason="OPENAI_API_KEY not set")
+    log.info(
+        "using_local_embedder", reason="Forced local embedder to avoid 429 rate limits"
+    )
     return HashingEmbedder()
 
 

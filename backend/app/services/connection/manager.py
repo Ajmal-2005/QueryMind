@@ -72,7 +72,8 @@ def build_url(connection: Connection, credentials: Credentials) -> str:
         # grant, so this is the equivalent of the SELECT-only database user
         # the other dialects use — the driver itself refuses writes, whatever
         # SQL reaches it.
-        path = quote(connection.database.replace("\\", "/"), safe="/:")
+        clean_path = connection.database.strip("\"'")
+        path = quote(clean_path.replace("\\", "/"), safe="/:")
         return f"{driver}:///file:{path}?mode=ro&uri=true"
 
     user = quote_plus(credentials.username)
