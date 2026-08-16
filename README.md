@@ -153,6 +153,10 @@ docs/              phase notes and decisions
 | 6 | Hardening, benchmarks, ablations | Not started |
 | 7 | Report, deck, demo | Not started |
 
+**[`PROGRESS.md`](PROGRESS.md) is the handoff document** — everything built
+so far, the decisions behind it, the known gaps, and what each remaining
+phase needs. Start there if you are picking this up fresh.
+
 Phase notes record what was built, what was verified, what was *not*, and why
 each decision was made: [`docs/phase-0.md`](docs/phase-0.md),
 [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md),
