@@ -164,8 +164,23 @@ def retrieve(
     top_k: int = DEFAULT_TOP_K,
     hops: int = DEFAULT_HOPS,
     embedder: Embedder | None = None,
+    mode: str = "hybrid",
 ) -> RetrievalResult:
-    """Retrieve the schema subgraph relevant to ``question``."""
+    """Retrieve the schema subgraph relevant to ``question``.
+
+    ``mode`` selects which retrievers contribute, and exists so the Phase 6
+    ablation can isolate each one's contribution to schema-linking recall:
+
+    - ``hybrid`` — dense + BM25 fused with reciprocal rank fusion. The default
+      and the configuration the proposal describes.
+    - ``dense`` — embeddings only.
+    - ``sparse`` — BM25 only.
+
+    Setting ``hops=0`` disables foreign-key expansion, which is the other arm
+    of the ablation. Both knobs are here rather than in the harness so the
+    thing being measured is the production code path, not a reimplementation
+    of it that could quietly differ.
+    """
     import time
 
     started = time.perf_counter()
@@ -197,9 +212,22 @@ def retrieve(
     sparse_scores = BM25(corpus).score(tokenize(question))
     sparse_order = _rank_order(sparse_scores)
 
-    fused_order, fused_scores = _reciprocal_rank_fusion(
-        dense_order, sparse_order, len(tables)
-    )
+    def _by_rank(order: list[int]) -> list[float]:
+        """Reciprocal-rank score per table, so single-retriever modes report
+        on the same scale as the fused one."""
+        scores = [0.0] * len(tables)
+        for rank, index in enumerate(order):
+            scores[index] = 1.0 / (1 + rank)
+        return scores
+
+    if mode == "dense":
+        fused_order, fused_scores = dense_order, _by_rank(dense_order)
+    elif mode == "sparse":
+        fused_order, fused_scores = sparse_order, _by_rank(sparse_order)
+    else:
+        fused_order, fused_scores = _reciprocal_rank_fusion(
+            dense_order, sparse_order, len(tables)
+        )
 
     dense_positions = {index: rank for rank, index in enumerate(dense_order)}
     sparse_positions = {index: rank for rank, index in enumerate(sparse_order)}

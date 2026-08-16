@@ -4,10 +4,13 @@ Continuation notes for the **AI-Based Natural Language Query Processing and
 Data Analytics Platform** capstone ([`proposal.md`](proposal.md)).
 
 Written so a new session can pick this up cold. Read this file, then
-[`docs/phase-5.md`](docs/phase-5.md) for the most recent detail.
+[`docs/phase-6.md`](docs/phase-6.md) for the most recent detail.
 
-**Status: Phases 0–5 complete. Phase 6 is next — and it is the one that
-produces every number in the final report.**
+**Status: Phases 0–6 complete. Phase 7 is the write-up.**
+
+**The evaluation machinery is finished and has never produced an accuracy
+figure, because there is still no `ANTHROPIC_API_KEY`. One environment
+variable now stands between this project and its first real number.**
 
 ---
 
@@ -92,9 +95,10 @@ blocker for Phase 4 except where noted.
 | `b639206` | 2 — NL→SQL core: intent, hybrid retrieval, generation |
 | `a9d3f05` | 3 — Validation gates, sandboxed execution, self-correction |
 | `d1330b8` | 4 — Analytics, visualization, dashboards, result cache |
-| _this_ | 5 — Conversation, corrections, glossary, semantic cache |
+| `ebc8a36` | 5 — Conversation, corrections, glossary, semantic cache |
+| _this_ | 6 — Evaluation harness, ablations, taxonomy, RBAC, usage |
 
-**514 backend tests pass.** ruff clean, frontend builds and lints clean.
+**547 backend tests pass.** ruff clean, frontend builds and lints clean.
 
 ---
 
@@ -213,6 +217,26 @@ Everything here is about the system knowing what the schema does not.
 cannot be measured without a model. Every feature is a mechanism whose effect
 is unmeasured.
 
+### Phase 6 — Hardening & Evaluation ✅ (machinery complete, no accuracy yet)
+
+- **Predictor slot filled**: `pipeline.run` is wired into the harness, with
+  ablation knobs threaded through the production code path rather than
+  reimplemented.
+- **Gold tables** parsed from benchmark SQL with sqlglot — a regex would
+  inflate recall by missing joins and counting CTE names.
+- **Error taxonomy**: ordered wrong_table → wrong_join → wrong_aggregation →
+  wrong_filter → wrong_column → wrong_ordering, most fundamental first.
+- **Ablation study, with real numbers** — and a `discriminates()` guard that
+  declares the current result non-discriminative, which it is: the 8-table
+  demo schema is saturated at 98% coverage. FK expansion helps consistently
+  (+2.5 recall, +10 all-found); hybrid fusion shows no benefit at this scale.
+- **Load test**: 200/200 succeed at 20-way concurrency, but throughput is flat
+  at ~8.5 req/s while latency grows linearly — complete serialisation on
+  SQLite's single writer.
+- **RBAC**: `require_roles` finally used, gating the audit trail.
+- **Usage endpoint** (Appendix B): tokens, estimated cost, per-user breakdown
+  for admins, with the rate table returned alongside.
+
 ---
 
 ## 6. Layout
@@ -220,7 +244,7 @@ is unmeasured.
 ```
 backend/app/
   api/v1/          auth.py  connections.py  dashboards.py  health.py
-                   learning.py  query.py
+                   learning.py  query.py  usage.py
   core/            config  crypto  database  logging  security
   models/          user  connection  query  schema_index  audit  dashboard
                    learning (corrections, glossary)
@@ -256,7 +280,13 @@ backend/app/
                    suggestions.py   — schema-aware starters (F23)
                    glossary.py      — business term matching (F24)
   workers/         EMPTY — Celery, Phase 6
-backend/evaluation/  datasets  metrics  runner (predictor slot still a stub)
+backend/evaluation/  datasets  metrics  runner
+                   gold.py       — gold-table extraction (sqlglot)
+                   harness.py    — throwaway indexed DB per run
+                   predictors.py — pipeline.run wired in (slot now filled)
+                   taxonomy.py   — how a wrong answer is wrong
+                   ablations.py  — retrieval ablation + discriminative guard
+backend/scripts/     seed_demo_db  load_test
 frontend/src/
   api/             typed client (client, auth, health, connections, query,
                    analytics, dashboards, learning)
@@ -268,7 +298,7 @@ frontend/src/
   pages/           LoginPage  ConnectionsPage  AskPage  DashboardsPage
                    GlossaryPage
   stores/          authStore  themeStore
-docs/              phase-0.md … phase-5.md
+docs/              phase-0.md … phase-6.md
 ```
 
 **`pipeline.run()` is the single entry point** for answering a question.
@@ -302,6 +332,9 @@ docs/              phase-0.md … phase-5.md
 | **A correction must execute before it is stored** | An unverified correction taught as an example propagates a mistake rather than fixing one. |
 | **Glossary matching is literal, not semantic** | A definition applied because it was *nearly* relevant would change a query's meaning invisibly. |
 | **Semantic cache: 0.93 plus polarity guards** | A question and its negation are neighbours in embedding space; similarity alone cannot separate them. |
+| **Ablation knobs live in the retriever, not the harness** | A harness that reimplements retrieval measures the reimplementation. |
+| **The ablation reports when it proves nothing** | The strongest possible result on a small schema is a table of 100%s that means nothing. `discriminates()` says so out loud. |
+| **Costs are labelled estimates and ship with their rates** | `tokens_used` is a combined total split by assumption; a stored cost silently goes stale when prices move. |
 
 ---
 
@@ -309,10 +342,13 @@ docs/              phase-0.md … phase-5.md
 
 **Blocking real results:**
 1. No API key → **no accuracy has ever been measured**. Phase 2's ≥65% and
-   Phase 3's ≥75% gates are unmet and unmeasurable.
-2. Spider/BIRD not downloaded.
-3. Harness predictor slot is still the placeholder stub — `pipeline.run` is
-   not wired into it.
+   Phase 3's ≥75% gates are unmet and unmeasurable. Phase 6 finished the
+   machinery, so this is now the *only* thing in the way.
+2. Spider/BIRD not downloaded. The loaders and gold-table extraction are
+   ready; without them the ablation runs on an 8-table schema that cannot
+   discriminate between retrieval methods.
+3. ~~Harness predictor slot~~ — **done in Phase 6**; `pipeline.run` is wired
+   in behind `--predictor pipeline`.
 
 **Written but never executed:**
 4. Anthropic client (no live call ever made) — now *two* of them: the SQL
@@ -327,6 +363,11 @@ docs/              phase-0.md … phase-5.md
 9. Cross-vocabulary semantic caching — the local embedder matches on word
    overlap, so "revenue" will never match "sales" until a real embedding
    provider is configured.
+10. Embedder comparison (hashing vs `text-embedding-3-small`) — needs an
+    `OPENAI_API_KEY` to have a second arm.
+11. Accessibility — considered while building, never actually audited.
+12. Concurrency beyond ~8.5 req/s — measured and diagnosed (SQLite single
+    writer, one uvicorn worker), not fixed. Needs Postgres.
 
 **Scoped but not built:**
 8. `EXPLAIN`-based cost estimation — `explain()` exists and is tested, but
@@ -347,23 +388,10 @@ See [`docs/phase-4.md`](docs/phase-4.md).
 
 See [`docs/phase-5.md`](docs/phase-5.md).
 
-### Phase 6 — Hardening & Evaluation (weeks 14–15)
+### Phase 6 — Hardening & Evaluation (weeks 14–15) — ✅ DONE
 
-**This is where the numbers come from. It is the highest-risk phase.**
-
-- Wire `pipeline.run` into the harness predictor slot.
-- Download Spider, Spider-Realistic, BIRD.
-- Full benchmark runs with a real API key.
-- **Ablation study**: no-retrieval vs retrieval; no-FK-expansion vs
-  expansion; no-correction vs correction; zero-shot vs few-shot; Claude vs
-  GPT. The retrieval and correction ablations directly answer research
-  questions 1 and 2.
-- Error taxonomy over failures (wrong table/column/join/aggregation/filter/
-  ordering, ambiguous, unanswerable).
-- Load testing, RBAC (`require_roles` exists, unused), audit logging (model
-  exists, written to), cost/token tracking, accessibility pass.
-- Compare local hashing embedder vs `text-embedding-3-small` on
-  schema-linking recall — decides whether the local fallback is viable.
+See [`docs/phase-6.md`](docs/phase-6.md). The machinery is complete; the
+numbers are not, and cannot be until an API key exists.
 
 ### Phase 7 — Presentation (week 16)
 
@@ -379,18 +407,30 @@ Final report, slide deck, demo video, live demonstration.
 
 ## 10. Immediate next steps
 
-1. **Set `ANTHROPIC_API_KEY`** in `backend/.env`. This is now blocking three
-   phases' worth of claims: the first real translation, the first measurable
-   accuracy, the correction recovery rate for research question 2, the first
-   genuine narrative (and the only way to confirm PII masking on a live
-   outbound call), and whether Phase 5's prompt work helps at all.
-2. **Wire `pipeline.run` into the evaluation harness** — the predictor slot is
-   still the placeholder stub. Nothing can be measured until this is done.
-3. **Download Spider, Spider-Realistic, BIRD.**
-4. **Install Docker Desktop** and re-run against Postgres and Redis, closing
-   the biggest unexercised surface.
+Phases 0–6 are complete. Everything below is blocked on the environment, not
+on engineering.
 
-(1) and (2) together are the critical path to every number in the report.
+1. **Set `ANTHROPIC_API_KEY`** in `backend/.env`, then:
+
+   ```
+   python -m evaluation.runner --dataset custom --predictor pipeline --save
+   ```
+
+   That one command produces the first accuracy figure this project has ever
+   had, plus the correction recovery rate for research question 2 and an error
+   taxonomy over the failures.
+
+2. **Download Spider** into `backend/evaluation/data/spider/` and re-run
+   `python -m evaluation.runner --ablation --save`. The 8-table demo schema is
+   saturated and the harness says so; Spider's larger schemas are what make
+   research question 1 answerable.
+
+3. **Docker → Postgres + Redis.** Closes the largest unexercised surface and
+   should lift the ~8.5 req/s ceiling the load test found.
+
+4. **Phase 7**: the report. `docs/phase-*.md` carry the decisions, the bugs
+   found, and — importantly — a "Not verified" section each, which is the
+   honest backbone of the write-up.
 
 ---
 

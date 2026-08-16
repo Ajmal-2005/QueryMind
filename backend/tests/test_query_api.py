@@ -72,6 +72,7 @@ def test_response_reports_stage_timings(
         "retrieval",
         "generation",
         "execution",
+        "learning",
         "analysis",
         "total",
     }

@@ -17,6 +17,7 @@ right answer. That is the most valuable training data this application ever
 sees, and it is why the corrections table exists at all.
 """
 
+import re
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -39,9 +40,43 @@ MIN_SIMILARITY = 0.15
 # win a close contest, not enough to drag in an unrelated correction.
 CORRECTION_BONUS = 0.15
 
-# Candidates scored per source. Scoring is a dot product over a few hundred
-# rows, so this is cheap; the cap exists to bound it on a long-lived install.
+# Candidates fetched per source before any embedding happens.
 CANDIDATE_LIMIT = 200
+
+# How many survive the lexical pre-filter and actually get embedded.
+#
+# Embedding 200 questions into 1,536 dimensions and taking 200 cosines is pure
+# Python, and the cost grows with every question ever asked. Measured at ~100
+# rows of history it was tens of milliseconds — not yet a problem, but one
+# whose slope is wrong. The pre-filter bounds it with set arithmetic first.
+EMBED_LIMIT = 40
+
+
+def _tokens(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z0-9]+", text.lower()) if len(w) > 2}
+
+
+def _prefilter(question: str, candidates: list, key, limit: int = EMBED_LIMIT) -> list:
+    """Cheapest-first shortlisting before the expensive step.
+
+    Word overlap is a poor similarity measure and a fine *filter*: a past
+    question sharing no content word with this one will not survive embedding
+    ranking either, so paying to embed it is waste. Ties keep the original
+    order, which is recency.
+    """
+    if len(candidates) <= limit:
+        return candidates
+
+    wanted = _tokens(question)
+    if not wanted:
+        return candidates[:limit]
+
+    scored = sorted(
+        candidates,
+        key=lambda c: len(wanted & _tokens(key(c))),
+        reverse=True,
+    )
+    return scored[:limit]
 
 
 @dataclass
@@ -120,9 +155,9 @@ def similar_examples(
         .limit(CANDIDATE_LIMIT)
     ).all()
 
-    for correction in corrections:
-        if not correction.embedding:
-            continue
+    for correction in _prefilter(
+        question, [c for c in corrections if c.embedding], lambda c: c.question
+    ):
         scored.append(
             Example(
                 question=correction.question,
@@ -146,7 +181,9 @@ def similar_examples(
         .limit(CANDIDATE_LIMIT)
     ).all()
 
-    history = [(q, s) for q, s in rows if s and q]
+    history = _prefilter(
+        question, [(q, s) for q, s in rows if s and q], lambda pair: pair[0]
+    )
     if history:
         vectors = embedder.embed([q for q, _ in history])
         for (past_question, sql), vector in zip(history, vectors, strict=False):

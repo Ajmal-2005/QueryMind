@@ -47,6 +47,11 @@ SIMILARITY_THRESHOLD = 0.93
 
 CANDIDATE_LIMIT = 100
 
+# Candidates that actually get embedded. Same reasoning as the correction
+# selector: embedding every past question on every request is a cost that
+# grows with history, and a load test caught it doing exactly that.
+EMBED_LIMIT = 40
+
 # Words whose presence or absence flips meaning without moving an embedding
 # far. Any disagreement on these blocks a hit regardless of similarity.
 POLARITY_WORDS = frozenset(
@@ -160,6 +165,17 @@ def lookup(
     ]
     if not candidates:
         return None
+
+    # Word overlap first, embeddings second. A past question sharing no
+    # content word with this one cannot clear a 0.93 threshold, so paying to
+    # embed it is waste.
+    if len(candidates) > EMBED_LIMIT:
+        wanted = set(re.findall(r"[a-z0-9]+", question.lower()))
+        candidates = sorted(
+            candidates,
+            key=lambda c: len(wanted & set(re.findall(r"[a-z0-9]+", c[1].lower()))),
+            reverse=True,
+        )[:EMBED_LIMIT]
 
     vectors = embedder.embed([question] + [q for _, q, _ in candidates])
     query_vector, candidate_vectors = vectors[0], vectors[1:]

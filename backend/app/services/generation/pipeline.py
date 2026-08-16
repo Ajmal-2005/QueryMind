@@ -142,8 +142,17 @@ def run(
     client: LLMClient | None = None,
     max_attempts: int | None = None,
     persist: bool = True,
+    retrieval_top_k: int | None = None,
+    retrieval_hops: int | None = None,
+    retrieval_mode: str = "hybrid",
 ) -> QueryOutcome:
-    """Answer one question, repairing failures up to the attempt cap."""
+    """Answer one question, repairing failures up to the attempt cap.
+
+    The three ``retrieval_*`` arguments exist for the Phase 6 ablation study
+    and default to the shipping configuration. They are threaded through here
+    rather than reimplemented in the harness so what gets measured is this
+    code path, not a copy of it that could drift.
+    """
     started = time.perf_counter()
     client = client or get_client()
     max_attempts = max_attempts or settings.MAX_CORRECTION_ATTEMPTS
@@ -160,7 +169,14 @@ def run(
         return outcome
 
     stage = time.perf_counter()
-    retrieval = retrieve(db, connection.id, intent.resolved_question)
+    retrieval = retrieve(
+        db,
+        connection.id,
+        intent.resolved_question,
+        **({"top_k": retrieval_top_k} if retrieval_top_k is not None else {}),
+        **({"hops": retrieval_hops} if retrieval_hops is not None else {}),
+        mode=retrieval_mode,
+    )
     outcome.retrieval = retrieval
     retrieval_ms = (time.perf_counter() - stage) * 1000
 
@@ -173,7 +189,11 @@ def run(
     index = build_schema_index(db, connection.id)
 
     # Examples chosen by similarity to *this* question, with corrections
-    # ranked above plain successes (F22).
+    # ranked above plain successes (F22). Timed separately because its cost
+    # grows with query history rather than with the question — the one stage
+    # here that gets slower the longer the system is used. An untimed stage is
+    # an uninvestigable one.
+    stage = time.perf_counter()
     outcome.examples_used = similar_examples(
         db,
         connection.id,
@@ -186,6 +206,7 @@ def run(
         db, connection.id, intent.resolved_question
     )
     glossary_text = glossary_service.render(outcome.glossary_terms)
+    learning_ms = (time.perf_counter() - stage) * 1000
 
     generation_ms = 0.0
     execution_ms = 0.0
@@ -347,6 +368,7 @@ def run(
         "retrieval": round(retrieval_ms, 1),
         "generation": round(generation_ms, 1),
         "execution": round(execution_ms, 1),
+        "learning": round(learning_ms, 1),
         "analysis": round(analysis_ms, 1),
         "total": round((time.perf_counter() - started) * 1000, 1),
     }
