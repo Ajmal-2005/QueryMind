@@ -153,11 +153,13 @@ def build(
     examples: list[tuple[str, str]] | None = None,
     error_feedback: str | None = None,
     previous_sql: str | None = None,
+    glossary: str = "",
 ) -> BuiltPrompt:
     """Assemble the generation prompt.
 
     ``error_feedback`` and ``previous_sql`` drive the phase 3 self-correction
-    loop; on a first attempt both are absent.
+    loop; on a first attempt both are absent. ``glossary`` carries the phase 5
+    business definitions matched against this question.
     """
     table_names = retrieval.table_names
     schema = render_schema(db, connection_id, table_names)
@@ -195,6 +197,11 @@ def build(
             "The question implies an ordering; include ORDER BY, and a LIMIT if "
             "it asks for a 'top' or 'bottom' subset."
         )
+
+    # Before the examples: a definition the organisation has agreed on
+    # outranks a pattern inferred from past queries.
+    if glossary:
+        sections.append(glossary)
 
     if intent.question_type is not QuestionType.AMBIGUOUS:
         sections.append(f"Question type: {intent.question_type.value}.")

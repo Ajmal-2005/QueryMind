@@ -5,6 +5,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AskPage } from '@/pages/AskPage'
 import { ConnectionsPage } from '@/pages/ConnectionsPage'
 import { DashboardsPage } from '@/pages/DashboardsPage'
+import { GlossaryPage } from '@/pages/GlossaryPage'
 import { LoginPage } from '@/pages/LoginPage'
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -40,6 +41,14 @@ export default function App() {
         element={
           <Shell>
             <DashboardsPage />
+          </Shell>
+        }
+      />
+      <Route
+        path="/glossary"
+        element={
+          <Shell>
+            <GlossaryPage />
           </Shell>
         }
       />

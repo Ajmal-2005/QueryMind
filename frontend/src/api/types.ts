@@ -175,11 +175,17 @@ export interface QueryResponse {
   question_type: QuestionType
   needs_clarification: boolean
   clarification: string | null
+  clarification_options: string[]
   rejected: boolean
   generation: Generation | null
   validation: ValidationInfo | null
   result: ResultSet | null
   analysis: Analysis | null
+  explanation: Explanation | null
+  is_follow_up: boolean
+  semantic_hit: SemanticHit | null
+  examples_used: UsedExample[]
+  glossary_terms: GlossaryMatch[]
   attempts: Attempt[]
   correction_attempts: number
   recovered_by_correction: boolean
@@ -378,4 +384,67 @@ export interface DashboardRefresh {
   refreshed_at: string
   tiles: TileResult[]
   duration_ms: number
+}
+
+/* ------------------------------ conversation & learning (phase 5) */
+
+export interface ExplanationStep {
+  order: number
+  clause: string
+  title: string
+  detail: string
+  sql: string
+}
+
+export interface Explanation {
+  parsed: boolean
+  summary: string
+  steps: ExplanationStep[]
+  tables: string[]
+  aggregates: string[]
+  row_limit: number | null
+  is_aggregate: boolean
+}
+
+export interface UsedExample {
+  question: string
+  sql: string
+  score: number
+  source: 'correction' | 'history'
+}
+
+export interface GlossaryMatch {
+  term: string
+  definition: string
+  sql_expression: string | null
+}
+
+export interface SemanticHit {
+  question: string
+  similarity: number
+  embedder: string
+}
+
+export interface Suggestion {
+  question: string
+  reason: string
+}
+
+export interface Correction {
+  id: string
+  question: string
+  original_sql: string | null
+  corrected_sql: string
+  note: string | null
+  verified: boolean
+  created_at: string
+}
+
+export interface GlossaryTerm {
+  id: string
+  term: string
+  definition: string
+  sql_expression: string | null
+  created_at: string
+  updated_at: string
 }

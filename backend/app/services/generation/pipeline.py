@@ -29,11 +29,17 @@ from app.models.schema_index import SchemaTable
 from app.services.analytics.analyze import Analysis
 from app.services.analytics.analyze import analyze as analyze_result
 from app.services.cache.results import run_cached
+from app.services.cache.semantic import SemanticHit
+from app.services.cache.semantic import lookup as semantic_lookup
 from app.services.execution.runner import ExecutionResult
 from app.services.generation import prompts
-from app.services.generation.generator import _few_shot_examples, _recent_questions
+from app.services.generation.explain import Explanation
+from app.services.generation.explain import explain as explain_sql
+from app.services.generation.generator import _recent_questions
 from app.services.generation.intent import Intent, analyze
 from app.services.generation.llm import Generation, LLMClient, LLMError, get_client
+from app.services.learning import glossary as glossary_service
+from app.services.learning.corrections import Example, similar_examples
 from app.services.linking.retriever import RetrievalResult, retrieve
 from app.services.validation.gates import (
     Gate,
@@ -72,6 +78,21 @@ class QueryOutcome:
     analysis: Analysis | None = None
     """Profile, chart, outliers and trend. Only ever set on a successful run —
     there is nothing to profile about a rejected or failed query."""
+
+    explanation: Explanation | None = None
+    """Clause-by-clause reading of the SQL, derived from the parsed statement
+    rather than from the model's account of its own work (F21)."""
+
+    semantic_hit: SemanticHit | None = None
+    """Set when generation was skipped because an earlier, differently-worded
+    question had already been answered (F25)."""
+
+    examples_used: list[Example] = field(default_factory=list)
+    """The few-shot examples selected, kept so the UI can show which past
+    corrections influenced this answer (F22)."""
+
+    glossary_terms: list = field(default_factory=list)
+    """Business terms matched in the question (F24)."""
 
     attempts: list[Attempt] = field(default_factory=list)
     rejected: bool = False
@@ -150,14 +171,88 @@ def run(
         return outcome
 
     index = build_schema_index(db, connection.id)
-    examples = _few_shot_examples(db, connection.id)
+
+    # Examples chosen by similarity to *this* question, with corrections
+    # ranked above plain successes (F22).
+    outcome.examples_used = similar_examples(
+        db,
+        connection.id,
+        intent.resolved_question,
+        limit=settings.MAX_FEW_SHOT_EXAMPLES,
+    )
+    examples = [(e.question, e.sql) for e in outcome.examples_used]
+
+    outcome.glossary_terms = glossary_service.match(
+        db, connection.id, intent.resolved_question
+    )
+    glossary_text = glossary_service.render(outcome.glossary_terms)
 
     generation_ms = 0.0
     execution_ms = 0.0
     previous_sql: str | None = None
     feedback: str | None = None
 
+    # A question already answered in different words skips generation
+    # entirely (F25). Only for a first turn: a follow-up depends on
+    # conversational context a cached question never had.
+    if not intent.is_follow_up:
+        stage = time.perf_counter()
+        hit = semantic_lookup(db, connection.id, intent.resolved_question, user_id)
+        generation_ms += (time.perf_counter() - stage) * 1000
+
+        if hit is not None:
+            outcome.semantic_hit = hit
+            outcome.generation = Generation(
+                sql=hit.sql,
+                confidence=hit.similarity,
+                explanation=(
+                    "Reused the SQL from an earlier question that means the "
+                    f"same thing: “{hit.question}”."
+                ),
+                assumptions=[
+                    f"Answered from a previous question ({hit.similarity:.0%} "
+                    f"similar), not regenerated. Embedder: {hit.embedder}."
+                ],
+                model=f"semantic-cache:{hit.embedder}",
+            )
+
     for attempt_number in range(1, max_attempts + 1):
+        # The cached SQL takes the first attempt. If it fails validation or
+        # execution — the schema may have moved since — the loop falls through
+        # to real generation on the next pass rather than giving up.
+        if attempt_number == 1 and outcome.semantic_hit is not None:
+            generation = outcome.generation
+            attempt = Attempt(number=attempt_number, sql=generation.sql)
+            validation = validate(
+                generation.sql,
+                connection.dialect,
+                index,
+                max_rows=settings.MAX_RESULT_ROWS,
+            )
+            attempt.validation = validation
+            outcome.validation = validation
+
+            if validation.ok:
+                stage = time.perf_counter()
+                execution = run_cached(connection, validation.sql)
+                execution_ms += (time.perf_counter() - stage) * 1000
+                attempt.execution = execution
+                outcome.execution = execution
+                outcome.attempts.append(attempt)
+                if execution.ok:
+                    break
+                attempt.error = execution.error
+            else:
+                attempt.error = validation.failure.message
+                outcome.attempts.append(attempt)
+
+            # The cached answer did not hold up; stop claiming it did.
+            outcome.semantic_hit = None
+            outcome.generation = None
+            outcome.validation = None
+            outcome.execution = None
+            continue
+
         prompt = prompts.build(
             db=db,
             connection_id=connection.id,
@@ -168,6 +263,7 @@ def run(
             examples=examples,
             previous_sql=previous_sql,
             error_feedback=feedback,
+            glossary=glossary_text,
         )
 
         stage = time.perf_counter()
@@ -240,6 +336,11 @@ def run(
             truncated=outcome.execution.truncated,
         )
         analysis_ms = (time.perf_counter() - stage) * 1000
+
+    # Read from the parsed statement, so it describes what will actually run
+    # rather than what the model says it wrote (F21).
+    if outcome.validation and outcome.validation.ok:
+        outcome.explanation = explain_sql(outcome.validation.sql, connection.dialect)
 
     outcome.stage_timings = {
         "intent": round(intent_ms, 1),

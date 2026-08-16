@@ -3,8 +3,11 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 
 import { errorMessage } from '@/api/client'
 import { listConnections } from '@/api/connections'
+import { fetchSuggestions } from '@/api/learning'
 import { askQuestion } from '@/api/query'
 import type { Connection, QueryResponse, QuestionType } from '@/api/types'
+import { CorrectionEditor } from '@/components/CorrectionEditor'
+import { ExplanationPanel } from '@/components/ExplanationPanel'
 import { Icon } from '@/components/icons'
 import { ResultTable } from '@/components/ResultTable'
 import { ResultView } from '@/components/ResultView'
@@ -27,13 +30,6 @@ const TYPE_LABEL: Record<QuestionType, string> = {
   ambiguous: 'Ambiguous',
 }
 
-const STARTERS = [
-  'How many customers do we have?',
-  'Top 5 products by price',
-  'What was total revenue last quarter?',
-  'Which customers have never placed an order?',
-]
-
 export function AskPage() {
   const [connectionId, setConnectionId] = useState<string>('')
   const [question, setQuestion] = useState('')
@@ -55,6 +51,15 @@ export function AskPage() {
   useEffect(() => {
     if (!connectionId && indexed.length > 0) setConnectionId(indexed[0].id)
   }, [connectionId, indexed])
+
+  // Starters generated from *this* schema (F23). The old hardcoded four were
+  // right for the demo database and wrong for every other one.
+  const { data: suggestions } = useQuery({
+    queryKey: ['suggestions', connectionId],
+    queryFn: () => fetchSuggestions(connectionId),
+    enabled: Boolean(connectionId),
+    staleTime: 10 * 60_000,
+  })
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -137,21 +142,35 @@ export function AskPage() {
               Try one of these
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
-              {STARTERS.map((starter) => (
+              {(suggestions ?? []).map((starter) => (
                 <button
-                  key={starter}
-                  onClick={() => submit(starter)}
+                  key={starter.question}
+                  onClick={() => submit(starter.question)}
+                  title={starter.reason}
                   className="rounded-full border border-subtle bg-surface-container-lowest px-3 py-1.5 text-body-md text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
                 >
-                  {starter}
+                  {starter.question}
                 </button>
               ))}
+              {suggestions?.length === 0 && (
+                <span className="text-body-md text-outline">
+                  Nothing to suggest — this schema has no obvious measures.
+                </span>
+              )}
             </div>
+            <p className="mt-2 text-[11px] text-outline">
+              Generated from your indexed schema, so each one is answerable.
+            </p>
           </div>
         )}
 
         {turns.map((turn) => (
-          <TurnView key={turn.id} turn={turn} connectionId={connectionId} />
+          <TurnView
+            key={turn.id}
+            turn={turn}
+            connectionId={connectionId}
+            onAsk={submit}
+          />
         ))}
 
         {ask.isPending && (
@@ -204,9 +223,11 @@ export function AskPage() {
 function TurnView({
   turn,
   connectionId,
+  onAsk,
 }: {
   turn: Turn
   connectionId: string
+  onAsk: (question: string) => void
 }) {
   const { response } = turn
 
@@ -237,6 +258,16 @@ function TurnView({
               <Pill tone="indigo" dot={false}>
                 {TYPE_LABEL[response.question_type]}
               </Pill>
+              {response.is_follow_up && (
+                <Pill tone="neutral" dot={false}>
+                  follow-up
+                </Pill>
+              )}
+              {response.semantic_hit && (
+                <Pill tone="amber" dot={false}>
+                  reused answer
+                </Pill>
+              )}
               {response.timings_ms.total !== undefined && (
                 <span className="font-mono text-[11px] text-outline">
                   {Math.round(response.timings_ms.total)} ms
@@ -255,10 +286,25 @@ function TurnView({
           )}
 
           {response?.needs_clarification && (
-            <p className="flex items-start gap-2 text-body-lg text-on-surface">
-              <Icon name="help" size={18} className="mt-0.5 text-data-amber" />
-              {response.clarification}
-            </p>
+            <div className="space-y-3">
+              <p className="flex items-start gap-2 text-body-lg text-on-surface">
+                <Icon name="help" size={18} className="mt-0.5 text-data-amber" />
+                {response.clarification}
+              </p>
+              {response.clarification_options.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {response.clarification_options.map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => onAsk(option)}
+                      className="rounded-full border border-data-amber/40 bg-data-amber/5 px-3 py-1.5 text-body-md text-on-surface-variant transition-colors hover:border-primary hover:text-primary"
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           {response?.rejected && (
@@ -308,6 +354,22 @@ function TurnView({
                   {warning}
                 </p>
               ))}
+
+              {response.explanation && (
+                <ExplanationPanel
+                  explanation={response.explanation}
+                  modelExplanation={response.generation.explanation}
+                />
+              )}
+
+              {response.validation?.ok && response.validation.sql && (
+                <CorrectionEditor
+                  connectionId={connectionId}
+                  question={response.question}
+                  originalSql={response.validation.sql}
+                  queryId={response.query_id}
+                />
+              )}
 
               {response.recovered_by_correction && (
                 <p className="flex items-center gap-1.5 text-body-md text-sql-syntax-string">
@@ -367,6 +429,74 @@ function Provenance({ response }: { response: QueryResponse }) {
       </summary>
 
       <div className="mt-3 space-y-3 text-body-md">
+        {response.semantic_hit && (
+          <div className="rounded-md border border-data-amber/25 bg-data-amber/5 p-3">
+            <p className="mb-1 flex items-center gap-1.5 text-label-md uppercase tracking-wider text-data-amber">
+              <Icon name="bolt" size={14} />
+              Answered from an earlier question
+            </p>
+            <p className="text-body-md text-on-surface-variant">
+              No model was called. This reuses the SQL from “
+              {response.semantic_hit.question}”, judged{' '}
+              {Math.round(response.semantic_hit.similarity * 100)}% similar by
+              the {response.semantic_hit.embedder} embedder.
+            </p>
+          </div>
+        )}
+
+        {response.glossary_terms.length > 0 && (
+          <div>
+            <p className="mb-1.5 text-label-md uppercase tracking-wider text-on-surface-variant">
+              Business definitions applied
+            </p>
+            <ul className="space-y-1 text-on-surface-variant">
+              {response.glossary_terms.map((term) => (
+                <li key={term.term}>
+                  <span className="font-mono text-on-surface">{term.term}</span>{' '}
+                  — {term.definition}
+                  {term.sql_expression && (
+                    <code className="ml-1 rounded bg-surface-container-low px-1 font-mono text-[11px]">
+                      {term.sql_expression}
+                    </code>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {response.examples_used.length > 0 && (
+          <div>
+            <p className="mb-1.5 text-label-md uppercase tracking-wider text-on-surface-variant">
+              Examples shown to the model
+            </p>
+            <ul className="space-y-1 text-on-surface-variant">
+              {response.examples_used.map((example) => (
+                <li key={example.question} className="flex items-start gap-1.5">
+                  <Icon
+                    name={example.source === 'correction' ? 'school' : 'history'}
+                    size={13}
+                    className={
+                      example.source === 'correction'
+                        ? 'mt-0.5 text-sql-syntax-string'
+                        : 'mt-0.5 text-outline'
+                    }
+                  />
+                  <span className="min-w-0">
+                    {example.question}
+                    <span className="ml-1.5 font-mono text-[11px] text-outline">
+                      {example.source === 'correction'
+                        ? 'your correction'
+                        : 'past success'}{' '}
+                      · {example.score.toFixed(2)}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div>
           <p className="mb-1.5 text-label-md uppercase tracking-wider text-on-surface-variant">
             Tables retrieved

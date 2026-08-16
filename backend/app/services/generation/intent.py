@@ -129,6 +129,35 @@ COREFERENCE_MARKERS = (
     r"^\s*(break|split|group|filter|sort|order)\b",
 )
 
+# A follow-up with no pronoun at all. "Just the north region" and "only last
+# month" are refinements of whatever came before, and treating them as new
+# questions loses the subject entirely.
+ELLIPTICAL_MARKERS = (
+    r"^\s*(just|only|but|except|exclude|excluding|include|including|without)\b",
+    r"^\s*(what|how) about\b",
+    r"^\s*(per|by|for)\b",
+    r"^\s*(descending|ascending|reversed?)\b",
+    r"^\s*(more|fewer|less)\b",
+)
+
+# What a follow-up is asking the previous question to do. Named so the
+# resolved question reads as an instruction rather than two glued sentences —
+# models handle "grouped additionally by region" far better than
+# "revenue last quarter — follow-up: break that down by region".
+REFINEMENTS: tuple[tuple[str, str], ...] = (
+    (
+        r"\b(break(ing)? (it |that |them )?down|split|group)\b",
+        "grouped additionally by",
+    ),
+    (r"\b(exclude|excluding|without|except)\b", "excluding"),
+    (r"\b(add|also (show|include)|include)\b", "additionally showing"),
+    (r"\b(filter|only|just|restrict|limit to|where)\b", "restricted to"),
+    # "sort"/"order"/"rank" only where they are *verbs*. `order` is a noun in
+    # every schema this product touches, and "also show order counts" asks for
+    # a column, not a sort — which is why this rule is last and this narrow.
+    (r"\b(sort|order|rank)(ed|ing)?\s+by\b|^\s*(sort|order|rank)\b", "ordered by"),
+)
+
 # Too vague to answer without guessing at the metric.
 VAGUE_PATTERNS = (
     r"^\s*(show|tell) me (something|anything|stuff)\b",
@@ -159,6 +188,14 @@ class Intent:
 
     limit_hint: int | None = None
     """An explicit row count in the question ("top 5"), if present."""
+
+    clarification_options: list[str] = field(default_factory=list)
+    """Concrete rewrites the user can pick instead of retyping (F20). Empty
+    when the question was answerable."""
+
+    missing: list[str] = field(default_factory=list)
+    """What the question did not specify — 'metric', 'time period'. Drives the
+    targeted clarification rather than one generic prompt."""
 
     @property
     def wants_ordering(self) -> bool:
@@ -211,20 +248,118 @@ def _is_vague(question: str, matched: QuestionType | None) -> bool:
     return len(words) < MIN_MEANINGFUL_WORDS
 
 
+def _refinement_verb(question: str) -> tuple[str, str | None]:
+    """How this follow-up modifies the previous question, and what said so."""
+    for pattern, phrasing in REFINEMENTS:
+        if re.search(pattern, question):
+            return phrasing, pattern
+    return "refined by", None
+
+
+def _resolve_follow_up(original: str, normalized: str, previous: str) -> str:
+    """Fold a follow-up into the question it refers to.
+
+    Phrased as a single instruction rather than two glued sentences. The
+    instruction words are then removed from the tail, so "break that down by
+    region" becomes "…, grouped additionally by: region" rather than repeating
+    itself — the model is being told what to do once, not twice.
+
+    The previous turn is the *resolved* question of that turn, so a chain of
+    follow-ups accumulates rather than each one only seeing the turn before:
+    "revenue last quarter" → "…by region" → "…just the north" has to keep the
+    time window from two turns back.
+    """
+    verb, pattern = _refinement_verb(normalized)
+
+    trailing = original.strip()
+    # The instruction goes first: "also" is both a connective and part of
+    # "also show", and stripping the connective first would leave a dangling
+    # "show" that the instruction pattern can no longer match.
+    if pattern:
+        trailing = re.sub(pattern, "", trailing, count=1, flags=re.I)
+    # Then the leading connective, which is noise once the sentences are merged.
+    trailing = re.sub(r"^\s*(and|also|now|then|but)\b[,\s]*", "", trailing, flags=re.I)
+    # And the preposition it left behind: "…down by region" → "region".
+    trailing = re.sub(
+        r"^[\s,]*(by|to|on|for|into)\b\s*", "", trailing.strip(), flags=re.I
+    )
+
+    # If stripping consumed everything, the original phrasing was all
+    # instruction and no object; fall back rather than emit a dangling colon.
+    return f"{previous.strip()}, {verb}: {trailing.strip() or original.strip()}"
+
+
+def _clarify(question: str, matched: QuestionType | None) -> Intent | None:
+    """Ask for exactly what is missing (F20), or None when nothing is.
+
+    A single generic "please be more specific" is the easy implementation and
+    the useless one — the user already knows their question was vague, and
+    what they need is to be told *which part*. So the checks are separate and
+    each carries its own concrete rewrites.
+    """
+    if _matches_any(question, VAGUE_PATTERNS):
+        return Intent(
+            question_type=QuestionType.AMBIGUOUS,
+            resolved_question=question,
+            needs_clarification=True,
+            missing=["metric", "time period"],
+            clarification=(
+                "That could mean almost anything in this database. Which "
+                "measure do you want, and over what period?"
+            ),
+            clarification_options=[
+                "Total revenue by month this year",
+                "Number of orders last quarter",
+                "Top 10 customers by spend",
+            ],
+        )
+
+    # Deliberately *not* here: "top customers" with no measure named. It is
+    # genuinely ambiguous — revenue, order count and recency give three
+    # different answers — but Phase 2 decided such questions get answered with
+    # the assumption stated rather than refused, and that decision holds. F20
+    # is about making the clarifications that already fire more useful, not
+    # about refusing more questions.
+
+    words = [w for w in re.findall(r"[a-z0-9]+", question) if len(w) > 1]
+    if matched is None and len(words) < MIN_MEANINGFUL_WORDS:
+        return Intent(
+            question_type=QuestionType.AMBIGUOUS,
+            resolved_question=question,
+            needs_clarification=True,
+            missing=["metric", "time period"],
+            clarification=(
+                "There is not quite enough there to build a query from. Name "
+                "the measure you want and, if it matters, the period."
+            ),
+            clarification_options=[
+                "Total revenue by month this year",
+                "How many customers signed up last month",
+            ],
+        )
+
+    return None
+
+
 def analyze(question: str, history: list[str] | None = None) -> Intent:
     """Classify a question and resolve it against prior turns.
 
-    ``history`` is previous questions in the session, oldest first.
+    ``history`` is previous questions in the session, oldest first. Pass the
+    *resolved* text of each turn where possible, so a chain of follow-ups
+    accumulates context rather than each one seeing only the turn before.
     """
     original = question.strip()
     normalized = original.lower()
 
-    is_follow_up = bool(history) and _matches_any(normalized, COREFERENCE_MARKERS)
+    is_follow_up = bool(history) and (
+        _matches_any(normalized, COREFERENCE_MARKERS)
+        or _matches_any(normalized, ELLIPTICAL_MARKERS)
+    )
 
     # A follow-up is judged on the merged text: "break that down by region"
     # is vague alone but perfectly clear after the question it refers to.
     if is_follow_up and history:
-        resolved = f"{history[-1].strip()} — follow-up: {original}"
+        resolved = _resolve_follow_up(original, normalized, history[-1])
         classify_against = f"{history[-1].lower()} {normalized}"
     else:
         resolved = original
@@ -232,17 +367,9 @@ def analyze(question: str, history: list[str] | None = None) -> Intent:
 
     matched = _classify(classify_against)
 
-    if not is_follow_up and _is_vague(normalized, matched):
-        return Intent(
-            question_type=QuestionType.AMBIGUOUS,
-            resolved_question=resolved,
-            needs_clarification=True,
-            clarification=(
-                "Could you be more specific about what you'd like to see? "
-                "For example, name the metric you care about and the time "
-                "period — 'total revenue by month this year'."
-            ),
-        )
+    if not is_follow_up and (clarification := _clarify(normalized, matched)):
+        clarification.resolved_question = resolved
+        return clarification
 
     return Intent(
         # Nothing matched but the question still has substance — treat it as a
@@ -250,6 +377,8 @@ def analyze(question: str, history: list[str] | None = None) -> Intent:
         question_type=matched or QuestionType.FILTER,
         resolved_question=resolved,
         is_follow_up=is_follow_up,
-        time_windows=_extract_time_windows(normalized),
-        limit_hint=_extract_limit(normalized),
+        # Time windows are read from the merged text so a follow-up inherits
+        # "last quarter" from the question it refines.
+        time_windows=_extract_time_windows(classify_against),
+        limit_hint=_extract_limit(classify_against),
     )

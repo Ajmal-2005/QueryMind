@@ -78,7 +78,10 @@ def test_follow_up_resolves_against_previous_question() -> None:
     )
     assert intent.is_follow_up
     assert "total revenue" in intent.resolved_question
-    assert "by region" in intent.resolved_question
+    # Merged into one instruction rather than two glued sentences, and the
+    # instruction words are not repeated in the tail.
+    assert "grouped additionally by: region" in intent.resolved_question
+    assert "break that down" not in intent.resolved_question
 
 
 def test_follow_up_is_not_treated_as_vague() -> None:
@@ -104,3 +107,49 @@ def test_ranking_and_trend_want_ordering() -> None:
     assert analyze("Top 5 products").wants_ordering
     assert analyze("Revenue by month").wants_ordering
     assert not analyze("How many customers?").wants_ordering
+
+
+# ------------------------------------------------- multi-turn, phase 5 (F19)
+
+
+def test_an_elliptical_follow_up_has_no_pronoun_to_find() -> None:
+    """ "Just the north region" refers back without saying so."""
+    intent = analyze("just the north region", history=["revenue by region"])
+    assert intent.is_follow_up
+    assert "restricted to: the north region" in intent.resolved_question
+
+
+def test_the_instruction_is_stated_once_not_twice() -> None:
+    intent = analyze("sort by revenue descending", history=["orders by customer"])
+    assert "ordered by: revenue descending" in intent.resolved_question
+    assert intent.resolved_question.count("sort") == 0
+
+
+def test_order_as_a_noun_is_not_read_as_a_sort() -> None:
+    """Every schema this product touches has an `orders` table."""
+    intent = analyze("also show order counts", history=["revenue by region"])
+    assert "additionally showing: order counts" in intent.resolved_question
+
+
+def test_a_follow_up_inherits_the_time_window_it_refines() -> None:
+    """The window came two turns back and must not be dropped."""
+    intent = analyze("break that down by region", history=["revenue last quarter"])
+    assert any("last quarter" in w for w in intent.time_windows)
+
+
+def test_a_chain_of_follow_ups_accumulates_context() -> None:
+    first = analyze("break that down by region", history=["revenue last quarter"])
+    second = analyze("just the north", history=[first.resolved_question])
+
+    assert "revenue last quarter" in second.resolved_question
+    assert "region" in second.resolved_question
+    assert "the north" in second.resolved_question
+
+
+def test_a_vague_question_offers_concrete_rewrites() -> None:
+    intent = analyze("show me something")
+    assert intent.needs_clarification
+    assert len(intent.clarification_options) >= 2
+    assert intent.missing == ["metric", "time period"]
+    # Every option is a question the user could actually send.
+    assert all(len(o.split()) >= 3 for o in intent.clarification_options)

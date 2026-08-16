@@ -3,6 +3,12 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.schemas.analytics import AnalysisRead
+from app.schemas.learning import (
+    ExampleRead,
+    ExplanationRead,
+    GlossaryMatchRead,
+    SemanticHitRead,
+)
 from app.services.generation.intent import QuestionType
 
 
@@ -85,6 +91,8 @@ class QueryResponse(BaseModel):
 
     needs_clarification: bool = False
     clarification: str | None = None
+    clarification_options: list[str] = []
+    """Concrete rewrites the user can pick instead of retyping (F20)."""
     rejected: bool = False
 
     generation: GenerationRead | None = None
@@ -93,6 +101,20 @@ class QueryResponse(BaseModel):
     analysis: AnalysisRead | None = None
     """Profile, recommended chart, outliers and trend. Present whenever rows
     came back; the written summary is fetched separately from /query/insight."""
+
+    explanation: ExplanationRead | None = None
+    """Clause-by-clause reading of the SQL, parsed rather than narrated (F21)."""
+
+    is_follow_up: bool = False
+    semantic_hit: SemanticHitRead | None = None
+    """Set when an earlier, differently-worded question answered this one and
+    generation was skipped entirely (F25)."""
+
+    examples_used: list[ExampleRead] = []
+    """Which past corrections and successes shaped this answer (F22)."""
+
+    glossary_terms: list[GlossaryMatchRead] = []
+    """Business definitions applied to this question (F24)."""
 
     attempts: list[AttemptRead] = []
     correction_attempts: int = 0

@@ -23,6 +23,14 @@ from app.schemas.analytics import (
     to_analysis_read,
     to_narrative_read,
 )
+from app.schemas.learning import (
+    ExampleRead,
+    ExplanationRead,
+    GlossaryMatchRead,
+    SemanticHitRead,
+    StepRead,
+    SuggestionRead,
+)
 from app.schemas.query import (
     AttemptRead,
     ExecuteRequest,
@@ -38,6 +46,8 @@ from app.services.analytics.analyze import analyze
 from app.services.analytics.narrative import narrate
 from app.services.cache.results import cache_status, run_cached
 from app.services.generation import pipeline
+from app.services.generation.explain import explain as explain_sql
+from app.services.learning.suggestions import suggest
 from app.services.validation.gates import validate
 
 router = APIRouter()
@@ -168,8 +178,38 @@ def execute_sql(
         ),
         result=_result_read(result),
         analysis=to_analysis_read(analysis) if analysis else None,
+        explanation=to_explanation_read(
+            explain_sql(validation.sql, connection.dialect)
+        ),
         error=result.error,
     )
+
+
+@router.get(
+    "/suggestions",
+    response_model=list[SuggestionRead],
+    summary="Starter questions this schema can answer",
+)
+def suggestions(
+    connection_id: str,
+    limit: int = 6,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> list[SuggestionRead]:
+    """Schema-aware starters (F23).
+
+    Generated from the indexed schema rather than hardcoded, so pointing this
+    at a different database offers questions that database can actually
+    answer. A starter that fails is worse than no starter — the user
+    reasonably concludes the product is broken.
+    """
+    connection = _owned_connection(connection_id, db, user)
+    _require_indexed(connection)
+
+    return [
+        SuggestionRead(question=s.question, reason=s.reason)
+        for s in suggest(db, connection.id, limit=min(limit, 12))
+    ]
 
 
 def _validated_result(payload_sql: str, connection: Connection, db: Session):
@@ -378,6 +418,29 @@ def history(
     ]
 
 
+def to_explanation_read(explanation) -> ExplanationRead | None:
+    if explanation is None:
+        return None
+    return ExplanationRead(
+        parsed=explanation.parsed,
+        summary=explanation.summary,
+        steps=[
+            StepRead(
+                order=s.order,
+                clause=s.clause,
+                title=s.title,
+                detail=s.detail,
+                sql=s.sql,
+            )
+            for s in explanation.steps
+        ],
+        tables=explanation.tables,
+        aggregates=explanation.aggregates,
+        row_limit=explanation.row_limit,
+        is_aggregate=explanation.is_aggregate,
+    )
+
+
 def _result_read(result) -> ResultRead | None:
     if not result or not result.ok:
         return None
@@ -437,11 +500,40 @@ def _to_response(outcome: pipeline.QueryOutcome) -> QueryResponse:
         question_type=outcome.intent.question_type,
         needs_clarification=outcome.intent.needs_clarification,
         clarification=outcome.intent.clarification,
+        clarification_options=outcome.intent.clarification_options,
+        is_follow_up=outcome.intent.is_follow_up,
         rejected=outcome.rejected,
         generation=generation,
         validation=validation,
         result=_result_read(outcome.execution),
         analysis=to_analysis_read(outcome.analysis) if outcome.analysis else None,
+        explanation=to_explanation_read(outcome.explanation),
+        semantic_hit=(
+            SemanticHitRead(
+                question=outcome.semantic_hit.question,
+                similarity=round(outcome.semantic_hit.similarity, 4),
+                embedder=outcome.semantic_hit.embedder,
+            )
+            if outcome.semantic_hit
+            else None
+        ),
+        examples_used=[
+            ExampleRead(
+                question=e.question,
+                sql=e.sql,
+                score=round(e.score, 4),
+                source=e.source,
+            )
+            for e in outcome.examples_used
+        ],
+        glossary_terms=[
+            GlossaryMatchRead(
+                term=t.term,
+                definition=t.definition,
+                sql_expression=t.sql_expression,
+            )
+            for t in outcome.glossary_terms
+        ],
         attempts=[
             AttemptRead(
                 number=a.number,

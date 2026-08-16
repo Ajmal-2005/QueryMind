@@ -4,9 +4,10 @@ Continuation notes for the **AI-Based Natural Language Query Processing and
 Data Analytics Platform** capstone ([`proposal.md`](proposal.md)).
 
 Written so a new session can pick this up cold. Read this file, then
-[`docs/phase-4.md`](docs/phase-4.md) for the most recent detail.
+[`docs/phase-5.md`](docs/phase-5.md) for the most recent detail.
 
-**Status: Phases 0–4 complete. Phase 5 is next.**
+**Status: Phases 0–5 complete. Phase 6 is next — and it is the one that
+produces every number in the final report.**
 
 ---
 
@@ -90,9 +91,10 @@ blocker for Phase 4 except where noted.
 | `e1ea432` | UI rebuild on the Stitch design system |
 | `b639206` | 2 — NL→SQL core: intent, hybrid retrieval, generation |
 | `a9d3f05` | 3 — Validation gates, sandboxed execution, self-correction |
-| _this_ | 4 — Analytics, visualization, dashboards, result cache |
+| `d1330b8` | 4 — Analytics, visualization, dashboards, result cache |
+| _this_ | 5 — Conversation, corrections, glossary, semantic cache |
 
-**460 backend tests pass.** ruff clean, frontend builds and lints clean.
+**514 backend tests pass.** ruff clean, frontend builds and lints clean.
 
 ---
 
@@ -187,15 +189,41 @@ writes.
 **Milestone gate met**: every query returns a table, an appropriate chart, and
 a written summary — confirmed in the running app.
 
+### Phase 5 — Conversation & Learning ✅ (every prompt change is unmeasured)
+
+Everything here is about the system knowing what the schema does not.
+
+- **Multi-turn** (F19): pronoun *and* elliptical follow-ups, merged into one
+  instruction rather than two glued sentences, with context accumulating
+  across a chain of turns.
+- **Clarification** (F20): names what is missing and offers clickable
+  rewrites. Deliberately does *not* refuse more questions than before.
+- **Explanation** (F21): clause-by-clause walkthrough read from the parsed
+  SQL, shown beside the model's own prose so a divergence is visible.
+- **Corrections** (F22): few-shot examples chosen by similarity, with
+  corrections outranking successes. A correction is stored only after it
+  passes the gates and executes.
+- **Suggestions** (F23): starters generated from the indexed schema.
+- **Glossary** (F24): literal term matching, injected into the prompt.
+- **Semantic cache** (F25): skips generation for a question already answered
+  in different words — behind a 0.93 threshold, polarity guards, and full
+  visibility in the UI.
+
+**Caveat for the report**: this phase changes prompts, and prompt quality
+cannot be measured without a model. Every feature is a mechanism whose effect
+is unmeasured.
+
 ---
 
 ## 6. Layout
 
 ```
 backend/app/
-  api/v1/          auth.py  connections.py  dashboards.py  health.py  query.py
+  api/v1/          auth.py  connections.py  dashboards.py  health.py
+                   learning.py  query.py
   core/            config  crypto  database  logging  security
   models/          user  connection  query  schema_index  audit  dashboard
+                   learning (corrections, glossary)
   schemas/         Pydantic contracts
   services/
     connection/    manager.py       — URLs, credentials, engines
@@ -208,6 +236,7 @@ backend/app/
     generation/    intent.py        — classification, coreference, dates
                    prompts.py       — DDL rendering, dialect rules
                    llm.py           — Anthropic / stub / scripted
+                   explain.py       — SQL → clause-by-clause English (F21)
                    pipeline.py      — THE ORCHESTRATOR (generate→validate→execute)
                    generator.py     — session history + few-shot lookups only
     validation/    gates.py         — the four gates
@@ -222,18 +251,24 @@ backend/app/
                    analyze.py       — composes the four local steps
     cache/         store.py         — Redis / in-process / null backends
                    results.py       — cached execution, invalidation
+                   semantic.py      — question-level cache, skips generation (F25)
+    learning/      corrections.py   — similarity-selected examples (F22)
+                   suggestions.py   — schema-aware starters (F23)
+                   glossary.py      — business term matching (F24)
   workers/         EMPTY — Celery, Phase 6
 backend/evaluation/  datasets  metrics  runner (predictor slot still a stub)
 frontend/src/
   api/             typed client (client, auth, health, connections, query,
-                   analytics, dashboards)
+                   analytics, dashboards, learning)
   components/      AppShell  ui.tsx  icons.tsx  SqlBlock  ResultTable
                    SchemaExplorer  AddConnectionForm  HealthBadge
                    ChartView  ChartControls  ProfilePanel  InsightPanel
                    ExportMenu  PinToDashboard  ResultView
+                   ExplanationPanel  CorrectionEditor
   pages/           LoginPage  ConnectionsPage  AskPage  DashboardsPage
+                   GlossaryPage
   stores/          authStore  themeStore
-docs/              phase-0.md … phase-4.md
+docs/              phase-0.md … phase-5.md
 ```
 
 **`pipeline.run()` is the single entry point** for answering a question.
@@ -262,6 +297,11 @@ docs/              phase-0.md … phase-4.md
 | **PII masking applies at the boundary, not to one object** | Learned the hard way: the first implementation masked the sample rows but not the profile's own top values, and leaked names into the prompt. |
 | **Dashboard tiles store SQL, not questions** | Re-asking on open would re-run generation, cost tokens each time, and could return a different query than the user pinned. |
 | **Cached results are labelled `cached`** | A 2 ms cache hit reported as query latency would flatter every benchmark in the final report. |
+| **F20 does not refuse more questions than before** | An earlier Phase 5 draft made "top 5 products" ambiguous for naming no measure; it broke two Phase 2 tests, and rightly. Phase 2 decided such questions get answered with the assumption stated. |
+| **The explanation is parsed, not narrated** | The model's prose says what it meant; the parsed reading says what will run. Both are shown so a divergence is visible. |
+| **A correction must execute before it is stored** | An unverified correction taught as an example propagates a mistake rather than fixing one. |
+| **Glossary matching is literal, not semantic** | A definition applied because it was *nearly* relevant would change a query's meaning invisibly. |
+| **Semantic cache: 0.93 plus polarity guards** | A question and its negation are neighbours in embedding space; similarity alone cannot separate them. |
 
 ---
 
@@ -277,11 +317,16 @@ docs/              phase-0.md … phase-4.md
 **Written but never executed:**
 4. Anthropic client (no live call ever made) — now *two* of them: the SQL
    generator and Phase 4's `AnthropicNarrator`. Every narrative so far came
-   from the template narrator.
+   from the template narrator. Phase 5 changed the prompt substantially
+   (glossary, similarity-selected examples) and **none of it has reached a
+   model**.
 5. Postgres/MySQL: introspection, execution, session guards, `pgvector`.
 6. Docker Compose stack.
 7. Statement timeout (no test forces a slow enough query).
 8. `RedisCache` — written in Phase 4, exercised only as `MemoryCache`.
+9. Cross-vocabulary semantic caching — the local embedder matches on word
+   overlap, so "revenue" will never match "sales" until a real embedding
+   provider is configured.
 
 **Scoped but not built:**
 8. `EXPLAIN`-based cost estimation — `explain()` exists and is tested, but
@@ -298,23 +343,9 @@ docs/              phase-0.md … phase-4.md
 
 See [`docs/phase-4.md`](docs/phase-4.md).
 
-### Phase 5 — Conversation & Learning (weeks 12–13)
+### Phase 5 — Conversation & Learning (weeks 12–13) — ✅ DONE
 
-- **F19 Multi-turn** — coreference resolution exists in `intent.py`; extend
-  and test it harder.
-- **F20 Ambiguity clarification** — exists; extend to targeted questions
-  rather than one generic prompt.
-- **F21 Query explanation panel** — the generation already returns an
-  explanation; build the walkthrough UI.
-- **F22 Learning from corrections** — user-edited SQL stored and retrieved as
-  few-shot examples. **Wiring exists**: `generator._few_shot_examples()` is a
-  one-function swap from "most recent successes" to embedding-similarity
-  selection. Needs the `corrections` table from Appendix C.
-- **F23 Suggested questions** — schema-aware starters on connect (the Ask
-  page has hardcoded ones now).
-- **F24 Business glossary** — map "active user", "churn" to SQL definitions.
-- **F25 Semantic caching** — serve cached results for semantically equivalent
-  questions.
+See [`docs/phase-5.md`](docs/phase-5.md).
 
 ### Phase 6 — Hardening & Evaluation (weeks 14–15)
 
@@ -348,19 +379,18 @@ Final report, slide deck, demo video, live demonstration.
 
 ## 10. Immediate next steps
 
-1. **Set `ANTHROPIC_API_KEY`** in `backend/.env`. This unblocks more than
-   anything else — first live Anthropic call, first real translation, first
-   measurable accuracy, the correction recovery rate for research question 2,
-   and now the first genuine narrative, which is also the only way to confirm
-   the PII masking layer behaves on a live outbound call.
-2. **Install Docker Desktop**, bring up `docker/docker-compose.yml`, and
-   re-run the suite against Postgres and Redis. Needed before any claim about
-   pgvector, the 200-table indexing milestone, or the result cache.
-3. **Start Phase 5** — multi-turn, ambiguity, explanation UI, learning from
-   corrections. It extends `intent.py` and `generator.py`, neither of which
-   Phase 4 touched.
+1. **Set `ANTHROPIC_API_KEY`** in `backend/.env`. This is now blocking three
+   phases' worth of claims: the first real translation, the first measurable
+   accuracy, the correction recovery rate for research question 2, the first
+   genuine narrative (and the only way to confirm PII masking on a live
+   outbound call), and whether Phase 5's prompt work helps at all.
+2. **Wire `pipeline.run` into the evaluation harness** — the predictor slot is
+   still the placeholder stub. Nothing can be measured until this is done.
+3. **Download Spider, Spider-Realistic, BIRD.**
+4. **Install Docker Desktop** and re-run against Postgres and Redis, closing
+   the biggest unexercised surface.
 
-None of these blocks the others.
+(1) and (2) together are the critical path to every number in the report.
 
 ---
 

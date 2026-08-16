@@ -111,7 +111,7 @@ def test_follow_up_resolves_against_the_session(db, indexed) -> None:
 
     assert outcome.intent.is_follow_up
     assert "total revenue by category" in outcome.intent.resolved_question
-    assert "by region" in client.calls[0].user
+    assert "region" in client.calls[0].user
 
 
 def test_history_does_not_leak_across_sessions(db, indexed) -> None:

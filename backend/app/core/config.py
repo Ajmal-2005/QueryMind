@@ -65,6 +65,15 @@ class Settings(BaseSettings):
     # chart, outliers and trend are computed locally and are unaffected.
     NARRATIVE_ENABLED: bool = True
 
+    # --- conversation & learning (phase 5) ---
+    # Serves a previous answer when a new question is near-identical to one
+    # already answered, skipping generation entirely. Off by default in tests
+    # via the threshold, but the switch exists because "close enough" is a
+    # judgement each deployment should make for itself.
+    SEMANTIC_CACHE_ENABLED: bool = True
+    # Past corrections and successes shown to the model as in-context examples.
+    MAX_FEW_SHOT_EXAMPLES: int = 3
+
     @field_validator("CORS_ORIGINS", mode="before")
     @classmethod
     def _split_origins(cls, v: object) -> object:

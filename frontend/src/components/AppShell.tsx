@@ -18,7 +18,7 @@ interface NavEntry {
 const NAV: NavEntry[] = [
   { icon: 'terminal', label: 'Ask', to: '/ask' },
   { icon: 'cloud_sync', label: 'Connections', to: '/connections' },
-  { icon: 'history', label: 'History', phase: '5' },
+  { icon: 'menu_book', label: 'Glossary', to: '/glossary' },
   { icon: 'dashboard', label: 'Dashboards', to: '/dashboards' },
   { icon: 'settings', label: 'Settings', phase: '6' },
 ]
