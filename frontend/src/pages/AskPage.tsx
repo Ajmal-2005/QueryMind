@@ -6,6 +6,7 @@ import { listConnections } from '@/api/connections'
 import { askQuestion } from '@/api/query'
 import type { Connection, QueryResponse, QuestionType } from '@/api/types'
 import { Icon } from '@/components/icons'
+import { ResultTable } from '@/components/ResultTable'
 import { SqlBlock } from '@/components/SqlBlock'
 import { Alert, EmptyState, Pill, Select, Spinner } from '@/components/ui'
 
@@ -253,15 +254,50 @@ function TurnView({ turn }: { turn: Turn }) {
             </p>
           )}
 
-          {response?.error && <Alert>{response.error}</Alert>}
+          {response?.rejected && (
+            <div className="rounded-md border border-error/25 bg-error-container p-4">
+              <p className="mb-1 flex items-center gap-1.5 text-label-md uppercase tracking-wider text-error">
+                <Icon name="gpp_bad" size={16} />
+                Blocked by the {response.validation?.gate} gate
+              </p>
+              <p className="text-body-md text-error">{response.error}</p>
+              <p className="mt-2 text-body-md text-on-surface-variant">
+                This query was refused outright and not retried. The connection
+                is read-only, so it could not have run in any case.
+              </p>
+            </div>
+          )}
 
-          {response?.generation && (
+          {response?.error && !response.rejected && <Alert>{response.error}</Alert>}
+
+          {response?.generation && !response.rejected && (
             <>
               <p className="text-body-lg text-on-surface">
                 {response.generation.explanation}
               </p>
 
-              <SqlBlock sql={response.generation.sql} />
+              {response.result && <ResultTable result={response.result} />}
+
+              <SqlBlock sql={response.validation?.sql || response.generation.sql} />
+
+              {response.validation?.warnings.map((warning) => (
+                <p
+                  key={warning}
+                  className="flex items-center gap-1.5 text-body-md text-on-surface-variant"
+                >
+                  <Icon name="info" size={14} />
+                  {warning}
+                </p>
+              ))}
+
+              {response.recovered_by_correction && (
+                <p className="flex items-center gap-1.5 text-body-md text-sql-syntax-string">
+                  <Icon name="auto_fix_high" size={14} />
+                  Repaired after {response.correction_attempts}{' '}
+                  {response.correction_attempts === 1 ? 'attempt' : 'attempts'} using
+                  the database's own error message.
+                </p>
+              )}
 
               {response.generation.assumptions.length > 0 && (
                 <div className="rounded-md border border-data-amber/25 bg-data-amber/5 p-3">

@@ -9,7 +9,7 @@ provisioned in phase 3.
 import json
 import time
 from dataclasses import dataclass
-from urllib.parse import quote_plus
+from urllib.parse import quote, quote_plus
 
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -67,7 +67,13 @@ def build_url(connection: Connection, credentials: Credentials) -> str:
 
     if connection.dialect is Dialect.SQLITE:
         # No host or credentials; `database` is a filesystem path.
-        return f"{driver}:///{connection.database}"
+        #
+        # Opened read-only through a `mode=ro` URI. SQLite has no roles to
+        # grant, so this is the equivalent of the SELECT-only database user
+        # the other dialects use — the driver itself refuses writes, whatever
+        # SQL reaches it.
+        path = quote(connection.database.replace("\\", "/"), safe="/:")
+        return f"{driver}:///file:{path}?mode=ro&uri=true"
 
     user = quote_plus(credentials.username)
     secret = quote_plus(credentials.password)

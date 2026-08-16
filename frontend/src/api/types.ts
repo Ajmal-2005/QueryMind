@@ -141,6 +141,32 @@ export interface Generation {
   output_tokens: number
 }
 
+export interface ValidationInfo {
+  ok: boolean
+  sql: string
+  gate: 'syntax' | 'schema' | 'safety' | 'cost' | null
+  message: string | null
+  retryable: boolean | null
+  warnings: string[]
+  limit_applied: number | null
+}
+
+export interface ResultSet {
+  columns: string[]
+  rows: unknown[][]
+  row_count: number
+  truncated: boolean
+  duration_ms: number
+}
+
+export interface Attempt {
+  number: number
+  sql: string
+  error: string | null
+  gate: string | null
+  succeeded: boolean
+}
+
 export interface QueryResponse {
   query_id: string | null
   question: string
@@ -148,7 +174,13 @@ export interface QueryResponse {
   question_type: QuestionType
   needs_clarification: boolean
   clarification: string | null
+  rejected: boolean
   generation: Generation | null
+  validation: ValidationInfo | null
+  result: ResultSet | null
+  attempts: Attempt[]
+  correction_attempts: number
+  recovered_by_correction: boolean
   retrieved_tables: RetrievedTable[]
   embedder: string | null
   error: string | null

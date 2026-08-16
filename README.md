@@ -4,8 +4,9 @@ Ask a relational database questions in plain English; get back validated SQL,
 a result table, a chart, and a written summary.
 
 Capstone implementation of [`proposal.md`](proposal.md). **Current state:
-Phase 2 complete** — connect a database, index its schema, and ask it
-questions in English to get generated SQL back.
+Phase 3 complete** — connect a database, index its schema, ask it questions in
+English, and get validated read-only SQL executed against it with the rows
+returned.
 
 > **No accuracy has been measured yet.** With no `ANTHROPIC_API_KEY` set, the
 > pipeline falls back to a stub that returns placeholder SQL without reading
@@ -82,9 +83,15 @@ It prints a file path. In the app, click **Add connection**, choose **SQLite
 schema** shows the tables, keys, join paths, sample values, and the
 description text that retrieval will search.
 
-Then open **Ask** and put a question to it. "How this was built" under each
-answer shows which tables were retrieved, which arrived via foreign-key
-expansion, and how long each pipeline stage took.
+Then open **Ask** and put a question to it. Every answer shows the executed
+rows, the SQL that produced them, and a "How this was built" panel with the
+retrieved tables, which of them arrived via foreign-key expansion, and the
+per-stage timings.
+
+The connection is read-only end to end: a generated or hand-written query
+that attempts a write is refused by the safety gate, and the database
+connection has no write capability to abuse even if it were not. See
+[`docs/phase-3.md`](docs/phase-3.md).
 
 ---
 
@@ -96,8 +103,9 @@ cd backend && .venv/Scripts/python -m evaluation.runner --dataset custom
 
 Reports execution accuracy, valid-SQL rate, schema-linking recall, correction
 recovery rate, and latency percentiles. The harness's predictor slot is still
-the placeholder stub — connecting the Phase 2 pipeline to it is the first
-task of Phase 3, so a 0% baseline remains the expected output today.
+the placeholder stub — wiring the pipeline into it, and running it with a
+real API key, is Phase 6 work. A 0% baseline remains the expected output
+today.
 
 The custom 10-question e-commerce set is committed. Spider and BIRD are large
 and licence-gated, so they are not vendored — extract them into
@@ -139,7 +147,7 @@ docs/              phase notes and decisions
 | 0 | Foundation: repo, CI, auth, health, eval harness | **Done** |
 | 1 | Connection manager and schema introspection | **Done** |
 | 2 | NL→SQL core: intent, retrieval, generation | **Done** (untested against a live model) |
-| 3 | Validation gates, sandboxed execution, self-correction | Not started |
+| 3 | Validation gates, sandboxed execution, self-correction | **Done** (Redis cache deferred) |
 | 4 | Analytics: profiling, charts, narrative insight | Not started |
 | 5 | Conversation and learning from corrections | Not started |
 | 6 | Hardening, benchmarks, ablations | Not started |
@@ -147,7 +155,8 @@ docs/              phase notes and decisions
 
 Phase notes record what was built, what was verified, what was *not*, and why
 each decision was made: [`docs/phase-0.md`](docs/phase-0.md),
-[`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md).
+[`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md),
+[`docs/phase-3.md`](docs/phase-3.md).
 
 ---
 

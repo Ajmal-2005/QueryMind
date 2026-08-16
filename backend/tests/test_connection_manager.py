@@ -53,8 +53,27 @@ def test_sqlite_url_is_a_file_path_with_no_credentials() -> None:
         _connection(dialect=Dialect.SQLITE, database="/tmp/demo.db"),
         Credentials("ignored", "ignored"),
     )
-    assert url == "sqlite+pysqlite:////tmp/demo.db"
+    assert url.startswith("sqlite+pysqlite:///file:/tmp/demo.db")
     assert "ignored" not in url
+
+
+def test_sqlite_url_is_opened_read_only() -> None:
+    # SQLite has no roles to grant, so the mode=ro URI is what stands in for
+    # the SELECT-only database user the other dialects use.
+    url = build_url(
+        _connection(dialect=Dialect.SQLITE, database="/tmp/demo.db"), Credentials()
+    )
+    assert "mode=ro" in url
+    assert "uri=true" in url
+
+
+def test_sqlite_windows_path_is_usable_in_a_uri() -> None:
+    url = build_url(
+        _connection(dialect=Dialect.SQLITE, database=r"C:\data\demo.db"),
+        Credentials(),
+    )
+    assert "\\" not in url
+    assert "C:/data/demo.db" in url
 
 
 def test_credentials_survive_encryption_roundtrip() -> None:

@@ -67,7 +67,30 @@ def test_response_reports_stage_timings(
         json={"connection_id": connection_id, "question": "How many customers?"},
     ).json()
 
-    assert set(body["timings_ms"]) == {"intent", "retrieval", "generation", "total"}
+    assert set(body["timings_ms"]) == {
+        "intent",
+        "retrieval",
+        "generation",
+        "execution",
+        "total",
+    }
+
+
+def test_query_returns_executed_rows(
+    client: TestClient, auth_headers: dict, connection_id: str
+) -> None:
+    # The stub asks for the first ten rows of the top-ranked table, so the
+    # pipeline runs all the way through execution.
+    body = client.post(
+        "/api/v1/query",
+        headers=auth_headers,
+        json={"connection_id": connection_id, "question": "How many customers?"},
+    ).json()
+
+    assert body["result"] is not None
+    assert body["result"]["columns"]
+    assert body["result"]["row_count"] > 0
+    assert body["validation"]["ok"] is True
 
 
 def test_ambiguous_question_returns_a_clarification(
@@ -165,3 +188,79 @@ def test_history_is_scoped_to_the_user(
     headers = {"Authorization": f"Bearer {other['access_token']}"}
 
     assert client.get("/api/v1/query/history", headers=headers).json() == []
+
+
+# ----------------------------------------------------------- manual SQL
+
+
+def test_manual_sql_executes(
+    client: TestClient, auth_headers: dict, connection_id: str
+) -> None:
+    response = client.post(
+        "/api/v1/query/execute",
+        headers=auth_headers,
+        json={
+            "connection_id": connection_id,
+            "sql": "SELECT COUNT(*) AS n FROM orders",
+        },
+    )
+    body = response.json()
+
+    assert response.status_code == 200
+    assert body["result"]["rows"][0][0] == 2000
+
+
+def test_manual_sql_goes_through_the_same_gates(
+    client: TestClient, auth_headers: dict, connection_id: str
+) -> None:
+    # Hand-written SQL is not more trusted than generated SQL — if anything
+    # less, since it never passed through a prompt that forbade writes.
+    body = client.post(
+        "/api/v1/query/execute",
+        headers=auth_headers,
+        json={"connection_id": connection_id, "sql": "DROP TABLE orders"},
+    ).json()
+
+    assert body["rejected"] is True
+    assert body["validation"]["gate"] == "safety"
+    assert body["result"] is None
+
+
+def test_manual_sql_with_a_bad_column_is_reported(
+    client: TestClient, auth_headers: dict, connection_id: str
+) -> None:
+    body = client.post(
+        "/api/v1/query/execute",
+        headers=auth_headers,
+        json={"connection_id": connection_id, "sql": "SELECT nope FROM orders"},
+    ).json()
+
+    assert body["validation"]["ok"] is False
+    assert body["validation"]["gate"] == "schema"
+    assert body["validation"]["retryable"] is True
+
+
+def test_manual_sql_requires_auth(client: TestClient) -> None:
+    response = client.post(
+        "/api/v1/query/execute", json={"connection_id": "x", "sql": "SELECT 1"}
+    )
+    assert response.status_code == 401
+
+
+def test_manual_sql_against_another_users_connection_is_404(
+    client: TestClient, connection_id: str
+) -> None:
+    other = client.post(
+        "/api/v1/auth/register",
+        json={
+            "email": f"other-{uuid.uuid4().hex[:8]}@example.com",
+            "password": "correct-horse-battery",
+        },
+    ).json()
+
+    response = client.post(
+        "/api/v1/query/execute",
+        headers={"Authorization": f"Bearer {other['access_token']}"},
+        json={"connection_id": connection_id, "sql": "SELECT 1"},
+    )
+    assert response.status_code == 404
