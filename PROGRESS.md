@@ -363,7 +363,12 @@ docs/              phase-0.md … phase-6.md
 6. Docker Compose stack.
 7. Statement timeout (no test forces a slow enough query).
 8. `RedisCache` — written in Phase 4, exercised only as `MemoryCache`.
-9. Cross-vocabulary semantic caching — the local embedder matches on word
+9. **Multi-turn beyond two turns.** `docs/phase-5.md` claims a chain of
+   follow-ups accumulates context. It does not: `_recent_questions` selects
+   `Query.question`, the text as typed, so a third turn resolves against the
+   raw second turn and loses the first. Two turns work correctly. Fixing it
+   means persisting the resolved question — a column and a migration.
+10. Cross-vocabulary semantic caching — the local embedder matches on word
    overlap, so "revenue" will never match "sales" until a real embedding
    provider is configured.
 10. Embedder comparison (hashing vs `text-embedding-3-small`) — needs an
@@ -376,7 +381,7 @@ docs/              phase-0.md … phase-6.md
 8. `EXPLAIN`-based cost estimation — `explain()` exists and is tested, but
    the cost gate only enforces a row cap.
 9. OpenAI GPT-5 as secondary provider (A/B + failover).
-10. Retrieval at scale — demo schema has 8 tables; nothing establishes recall
+11. Retrieval at scale — demo schema has 8 tables; nothing establishes recall
     at 400.
 
 ---
