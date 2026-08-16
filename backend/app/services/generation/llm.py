@@ -29,6 +29,11 @@ DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5"
 # project's key has access to; override with OPENAI_MODEL.
 DEFAULT_OPENAI_MODEL = "gpt-4.1"
 
+# Gemini's free tier needs no billing, which makes it the practical default
+# for a project without a funded account. `gemini-3.5-flash` does not exist —
+# the default was wrong and would have failed on the first call.
+DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+
 MAX_OUTPUT_TOKENS = 4096
 
 # The response contract. `strict` schema validation means the SQL always
@@ -201,7 +206,7 @@ class GeminiClient:
 
     name = "gemini"
 
-    def __init__(self, api_key: str, model: str = "gemini-3.5-flash") -> None:
+    def __init__(self, api_key: str, model: str = DEFAULT_GEMINI_MODEL) -> None:
         self.api_key = api_key
         self.model = model
 
@@ -457,7 +462,7 @@ def get_client() -> LLMClient:
     if settings.OPENAI_API_KEY:
         chain.append(OpenAIClient(settings.OPENAI_API_KEY, settings.OPENAI_MODEL))
     if settings.GEMINI_API_KEY:
-        chain.append(GeminiClient(settings.GEMINI_API_KEY))
+        chain.append(GeminiClient(settings.GEMINI_API_KEY, settings.GEMINI_MODEL))
 
     if not chain:
         log.warning("using_stub_llm", reason="no LLM provider key configured")

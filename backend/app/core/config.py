@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
     OPENAI_MODEL: str = "gpt-4.1"
     GEMINI_API_KEY: str | None = None
+    GEMINI_MODEL: str = "gemini-2.0-flash"
 
     # --- execution guardrails (phase 3) ---
     QUERY_TIMEOUT_SECONDS: int = 30
