@@ -49,7 +49,13 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str | None = None
     OPENAI_MODEL: str = "gpt-4.1"
     GEMINI_API_KEY: str | None = None
-    GEMINI_MODEL: str = "gemini-2.0-flash"
+    GEMINI_MODEL: str = "gemini-3.1-flash-lite"
+
+    # Order the failover chain tries providers. The proposal names Anthropic
+    # primary and OpenAI secondary, which is the default; override when a key
+    # exists but cannot serve, so a dead provider does not add its timeout to
+    # every single query.
+    LLM_PROVIDER_ORDER: str = "anthropic,openai,gemini"
 
     # --- execution guardrails (phase 3) ---
     QUERY_TIMEOUT_SECONDS: int = 30

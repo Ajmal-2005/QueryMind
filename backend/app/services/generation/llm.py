@@ -30,11 +30,35 @@ DEFAULT_ANTHROPIC_MODEL = "claude-sonnet-5"
 DEFAULT_OPENAI_MODEL = "gpt-4.1"
 
 # Gemini's free tier needs no billing, which makes it the practical default
-# for a project without a funded account. `gemini-3.5-flash` does not exist —
-# the default was wrong and would have failed on the first call.
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+# for a project without a funded account.
+#
+# `flash-lite` rather than `flash`, measured rather than assumed: on this
+# project's free-tier key `gemini-3.5-flash` took 15-25s per query and hit
+# RESOURCE_EXHAUSTED after roughly six requests, while flash-lite answers in
+# ~1.5s and did not rate-limit. Schema linking already narrows the prompt to a
+# handful of tables, so the smaller model has an easy job.
+#
+# Pinned rather than `gemini-flash-latest`: a moving alias would make two runs
+# of the evaluation harness incomparable without recording which model each
+# used. Google retires these — `gemini-2.0-flash` returns 404 today — so if
+# this stops resolving, list what the key can see and pin a current one.
+DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite"
 
 MAX_OUTPUT_TOKENS = 4096
+
+# Retries for errors that genuinely recover — a 503 blip, a momentary rate
+# limit. Deliberately not for quota or auth failures, which never do.
+TRANSIENT_RETRIES = 2
+
+_TRANSIENT_MARKERS = ("503", "502", "500", "unavailable", "deadline", "timeout")
+
+
+def _is_transient(exc: Exception) -> bool:
+    text = str(exc).lower()
+    if "insufficient_quota" in text or "api key" in text or "permission" in text:
+        return False
+    return any(marker in text for marker in _TRANSIENT_MARKERS)
+
 
 # The response contract. `strict` schema validation means the SQL always
 # arrives in a known shape rather than embedded in prose we would have to
@@ -219,19 +243,37 @@ class GeminiClient:
         client = genai.Client(api_key=self.api_key)
         started = time.perf_counter()
 
-        try:
-            response = client.models.generate_content(
-                model=self.model,
-                contents=prompt.user,
-                config=types.GenerateContentConfig(
-                    system_instruction=prompt.system,
-                    response_mime_type="application/json",
-                    response_schema=GeminiSQLResponse,
-                    temperature=0.0,
-                ),
-            )
-        except Exception as exc:
-            raise LLMError(f"Gemini API error: {exc}") from exc
+        # Observed in practice: the free tier returns an occasional 503 that
+        # succeeds immediately on retry. Failing over to the stub for a blip
+        # would replace a real answer with a placeholder, which is a far worse
+        # outcome than waiting a second. Quota and auth errors are not
+        # retried — those never recover.
+        response = None
+        last: Exception | None = None
+        for attempt in range(TRANSIENT_RETRIES + 1):
+            try:
+                response = client.models.generate_content(
+                    model=self.model,
+                    contents=prompt.user,
+                    config=types.GenerateContentConfig(
+                        system_instruction=prompt.system,
+                        response_mime_type="application/json",
+                        response_schema=GeminiSQLResponse,
+                        temperature=0.0,
+                    ),
+                )
+                break
+            except Exception as exc:  # noqa: BLE001 - SDK raises varied types
+                last = exc
+                if attempt >= TRANSIENT_RETRIES or not _is_transient(exc):
+                    raise LLMError(f"Gemini API error: {exc}") from exc
+                log.warning(
+                    "gemini_transient_retry", attempt=attempt + 1, error=str(exc)[:120]
+                )
+                time.sleep(0.8 * (attempt + 1))
+
+        if response is None:  # pragma: no cover - loop always sets or raises
+            raise LLMError(f"Gemini API error: {last}")
 
         elapsed = (time.perf_counter() - started) * 1000
 
@@ -434,11 +476,14 @@ class FailoverClient:
                 # The stub's own wording says no provider is configured, which
                 # is wrong here — one was, and it failed. Say what happened.
                 if client.name == "stub":
+                    # Every failure, not just the first: with a chain of
+                    # providers, the first error is rarely the interesting one
+                    # and quoting only it hides why the rest also failed.
                     generation.assumptions = [
-                        "The configured language model could not be reached "
-                        f"({errors[0]}), so this is a placeholder query, not a "
-                        "real translation of the question."
-                    ]
+                        "No language model could be reached, so this is a "
+                        "placeholder query, not a real translation of the "
+                        "question."
+                    ] + [f"{e}" for e in errors]
             return generation
 
         raise LLMError("Every provider failed — " + "; ".join(errors))
@@ -455,14 +500,22 @@ def get_client() -> LLMClient:
     The stub is the last resort and logs at warning level: it does not read
     the question, so anything measured against it is a baseline, not accuracy.
     """
-    chain: list[LLMClient] = []
+    builders = {
+        "anthropic": lambda: AnthropicClient(settings.ANTHROPIC_API_KEY),
+        "openai": lambda: OpenAIClient(settings.OPENAI_API_KEY, settings.OPENAI_MODEL),
+        "gemini": lambda: GeminiClient(settings.GEMINI_API_KEY, settings.GEMINI_MODEL),
+    }
+    keys = {
+        "anthropic": settings.ANTHROPIC_API_KEY,
+        "openai": settings.OPENAI_API_KEY,
+        "gemini": settings.GEMINI_API_KEY,
+    }
 
-    if settings.ANTHROPIC_API_KEY:
-        chain.append(AnthropicClient(settings.ANTHROPIC_API_KEY))
-    if settings.OPENAI_API_KEY:
-        chain.append(OpenAIClient(settings.OPENAI_API_KEY, settings.OPENAI_MODEL))
-    if settings.GEMINI_API_KEY:
-        chain.append(GeminiClient(settings.GEMINI_API_KEY, settings.GEMINI_MODEL))
+    chain: list[LLMClient] = [
+        builders[name]()
+        for name in (n.strip().lower() for n in settings.LLM_PROVIDER_ORDER.split(","))
+        if name in builders and keys[name]
+    ]
 
     if not chain:
         log.warning("using_stub_llm", reason="no LLM provider key configured")

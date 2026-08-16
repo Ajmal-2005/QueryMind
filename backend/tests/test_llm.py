@@ -131,9 +131,11 @@ def test_falling_through_to_the_stub_says_why() -> None:
     ).generate(PROMPT)
 
     assumption = " ".join(generation.assumptions)
-    assert "could not be reached" in assumption
-    assert "insufficient_quota" in assumption
+    assert "No language model could be reached" in assumption
     assert "not a real translation" in assumption
+    # Every provider's failure is quoted, not just the first — with a chain,
+    # the first error is rarely the interesting one.
+    assert "insufficient_quota" in assumption
 
 
 def test_every_provider_failing_raises() -> None:
@@ -156,3 +158,29 @@ def test_a_healthy_first_provider_is_not_bypassed() -> None:
 
     assert client.generate(PROMPT).sql == "SELECT 1"
     assert second.calls == []  # never consulted
+
+
+def test_all_provider_failures_are_reported_not_just_the_first() -> None:
+    from app.services.generation.llm import FailoverClient, LLMError, StubClient
+
+    generation = FailoverClient(
+        [
+            ScriptedClient([LLMError("openai: insufficient_quota")]),
+            ScriptedClient([LLMError("gemini: 503 unavailable")]),
+            StubClient(),
+        ]
+    ).generate(PROMPT)
+
+    assumption = " ".join(generation.assumptions)
+    assert "insufficient_quota" in assumption
+    assert "503 unavailable" in assumption
+
+
+def test_transient_errors_are_distinguished_from_permanent_ones() -> None:
+    """A 503 recovers on retry; an exhausted quota never does."""
+    from app.services.generation.llm import _is_transient
+
+    assert _is_transient(Exception("503 Service Unavailable"))
+    assert _is_transient(Exception("deadline exceeded"))
+    assert not _is_transient(Exception("insufficient_quota"))
+    assert not _is_transient(Exception("API key not valid"))
