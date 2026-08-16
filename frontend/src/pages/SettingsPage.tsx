@@ -131,16 +131,30 @@ export function SettingsPage() {
               <Row label="Repaired by self-correction">
                 {usage.data.totals.recovered_by_correction.toLocaleString()}
               </Row>
-              <Row label="Tokens">{usage.data.totals.tokens.toLocaleString()}</Row>
-              <Row label="Estimated cost">
-                ${usage.data.totals.estimated_cost_usd.toFixed(4)}
-              </Row>
               <Row label="Mean latency">
                 {Math.round(usage.data.totals.mean_latency_ms)} ms
               </Row>
+
+              {/* Tokens and cost only appear once something has actually been
+                  spent. With no API key they are permanently zero, and a
+                  row reading "$0.0000" every time is noise pretending to be
+                  a feature. */}
+              {usage.data.totals.tokens > 0 && (
+                <>
+                  <Row label="Tokens">
+                    {usage.data.totals.tokens.toLocaleString()}
+                  </Row>
+                  <Row label="Estimated cost">
+                    ${usage.data.totals.estimated_cost_usd.toFixed(4)}
+                  </Row>
+                </>
+              )}
+
               <p className="mt-3 text-[11px] text-outline">
                 Showing {usage.data.scope === 'you' ? 'your own' : 'all users’'}{' '}
-                activity. {usage.data.cost_note}
+                activity.
+                {usage.data.totals.tokens === 0 &&
+                  ' No language model has been called, so no tokens have been spent.'}
               </p>
             </>
           ) : null}

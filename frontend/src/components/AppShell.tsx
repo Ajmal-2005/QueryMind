@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 
 import { HealthBadge } from '@/components/HealthBadge'
 import { Icon } from '@/components/icons'
-import { IconButton, SearchInput } from '@/components/ui'
+import { IconButton } from '@/components/ui'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 
@@ -93,14 +93,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="text-headline-sm font-bold text-primary md:hidden">
               Syntactic Logic
             </span>
-            <div className="hidden w-full max-w-md md:block">
-              <SearchInput
-                placeholder="Search connections, tables, or columns…"
-                disabled
-                title="Global search arrives in Phase 5"
-                className="disabled:cursor-not-allowed disabled:opacity-60"
-              />
-            </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
@@ -114,9 +106,16 @@ export function AppShell({ children }: { children: ReactNode }) {
               onClick={toggleTheme}
             />
             <IconButton icon="logout" label="Sign out" onClick={signOut} />
-            <span className="ml-1 flex h-8 w-8 items-center justify-center rounded-full border border-subtle bg-primary-fixed text-label-md text-on-primary-container">
+            {/* Was a bare <span>: it looked like a control and did nothing.
+                An avatar in this position is expected to open the account,
+                so it does. */}
+            <NavLink
+              to="/settings"
+              title="Account settings"
+              className="ml-1 flex h-8 w-8 items-center justify-center rounded-full border border-subtle bg-primary-fixed text-label-md text-on-primary-container transition-colors hover:border-primary"
+            >
               {initials}
-            </span>
+            </NavLink>
           </div>
         </header>
 
