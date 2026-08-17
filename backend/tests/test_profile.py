@@ -1,8 +1,8 @@
 """Statistical profiling (F14).
 
 The arithmetic is the standard library's and is not re-tested here. What is
-tested is type inference, because every downstream decision — chart, outlier,
-trend — is made from `kind`, and because SQLite hands back dates as strings
+tested is type inference, because every downstream decision - chart, outlier,
+trend - is made from `kind`, and because SQLite hands back dates as strings
 which is exactly the case naive inference gets wrong.
 """
 
@@ -23,7 +23,7 @@ def test_numeric_column_is_detected_and_described() -> None:
 
 
 def test_iso_date_strings_are_temporal_not_categorical() -> None:
-    """SQLite has no date type — a DATE column arrives as `str`."""
+    """SQLite has no date type - a DATE column arrives as `str`."""
     profile = profile_result(
         ["ordered_on"], [["2024-01-15"], ["2024-02-20"], ["2024-03-11"]]
     )

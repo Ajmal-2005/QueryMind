@@ -37,7 +37,7 @@ def test_a_final_uptick_does_not_by_itself_declare_growth() -> None:
 
     Four declining months and one small recovery. Every period votes, so the
     last one cannot outweigh the rest. A *large* final spike would still move
-    the verdict — least squares is not robust to outliers, and a series that
+    the verdict - least squares is not robust to outliers, and a series that
     genuinely spiked should be reported as having done so.
     """
     rows = [

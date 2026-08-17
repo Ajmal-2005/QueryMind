@@ -59,7 +59,7 @@ def test_prompt_reports_outliers_with_which_methods_agreed() -> None:
 
 
 def test_profile_values_are_masked_as_well_as_the_sample() -> None:
-    """The profile carries row data too — the most common values.
+    """The profile carries row data too - the most common values.
 
     Masking the sample alone would have leaked precisely the columns the
     masking exists to protect.
@@ -71,7 +71,7 @@ def test_profile_values_are_masked_as_well_as_the_sample() -> None:
     assert "Ada Lovelace" not in described
     assert "Grace Hopper" not in described
     assert "values withheld (name)" in described
-    # The measure is untouched — there would be nothing to summarise otherwise.
+    # The measure is untouched - there would be nothing to summarise otherwise.
     assert "min 100" in described
 
 

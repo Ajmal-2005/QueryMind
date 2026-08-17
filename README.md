@@ -4,13 +4,13 @@ Ask a relational database questions in plain English; get back validated SQL,
 a result table, a chart, and a written summary.
 
 Capstone implementation of [`proposal.md`](proposal.md). **Current state:
-Phase 3 complete** — connect a database, index its schema, ask it questions in
+Phase 3 complete** - connect a database, index its schema, ask it questions in
 English, and get validated read-only SQL executed against it with the rows
 returned.
 
 > **No accuracy has been measured yet.** With no `ANTHROPIC_API_KEY` set, the
 > pipeline falls back to a stub that returns placeholder SQL without reading
-> the question. Set a key to get real translations — see
+> the question. Set a key to get real translations - see
 > [`docs/phase-2.md`](docs/phase-2.md).
 
 ---
@@ -46,7 +46,7 @@ CORS setup in development. The first account you register becomes the admin.
 docker compose -f docker/docker-compose.yml up --build
 ```
 
-Then point the backend at Postgres by setting `DATABASE_URL` in `.env` — see
+Then point the backend at Postgres by setting `DATABASE_URL` in `.env` - see
 [`.env.example`](.env.example).
 
 ---
@@ -71,7 +71,7 @@ CI runs exactly these three on every push.
 
 ## Trying it out
 
-Build the demo target database — an 8-table e-commerce schema with 2,000
+Build the demo target database - an 8-table e-commerce schema with 2,000
 orders:
 
 ```bash
@@ -103,12 +103,12 @@ cd backend && .venv/Scripts/python -m evaluation.runner --dataset custom
 
 Reports execution accuracy, valid-SQL rate, schema-linking recall, correction
 recovery rate, and latency percentiles. The harness's predictor slot is still
-the placeholder stub — wiring the pipeline into it, and running it with a
+the placeholder stub - wiring the pipeline into it, and running it with a
 real API key, is Phase 6 work. A 0% baseline remains the expected output
 today.
 
 The custom 10-question e-commerce set is committed. Spider and BIRD are large
-and licence-gated, so they are not vendored — extract them into
+and licence-gated, so they are not vendored - extract them into
 `backend/evaluation/data/spider/` and `backend/evaluation/data/bird/` and the
 loaders will find them. Running without them prints exactly what is missing.
 
@@ -123,7 +123,7 @@ backend/
     core/          config, database, security, logging
     models/        SQLAlchemy models
     schemas/       Pydantic contracts
-    services/      pipeline stages — populated from phase 1 onward
+    services/      pipeline stages - populated from phase 1 onward
     workers/       Celery tasks (phase 1+)
   alembic/         migrations
   evaluation/      Spider/BIRD/custom harness
@@ -153,7 +153,7 @@ docs/              phase notes and decisions
 | 6 | Hardening, benchmarks, ablations | Not started |
 | 7 | Report, deck, demo | Not started |
 
-**[`PROGRESS.md`](PROGRESS.md) is the handoff document** — everything built
+**[`PROGRESS.md`](PROGRESS.md) is the handoff document** - everything built
 so far, the decisions behind it, the known gaps, and what each remaining
 phase needs. Start there if you are picking this up fresh.
 
@@ -169,4 +169,4 @@ each decision was made: [`docs/phase-0.md`](docs/phase-0.md),
 Built and verified on Python 3.10 and Node 20. The proposal specifies Python
 3.11+; the code is 3.10-compatible and the Docker image pins 3.11, so both
 work. Docker was not available on the development machine, so the Compose
-stack is written but unverified — see `docs/phase-0.md`.
+stack is written but unverified - see `docs/phase-0.md`.

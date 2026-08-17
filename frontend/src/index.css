@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 @layer base {
-  /* Light palette — the Stitch values, verbatim. */
+  /* Light palette - the Stitch values, verbatim. */
   :root {
     --surface-bg: 248 250 252; /* #F8FAFC */
     --surface: 252 248 250; /* #fcf8fa */

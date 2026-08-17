@@ -1,4 +1,4 @@
-"""Schema linking — retrieving the tables a question actually needs.
+"""Schema linking - retrieving the tables a question actually needs.
 
 This is the component that decides whether the system works on real
 databases. A 400-table schema does not fit in a prompt; the answer is to
@@ -59,7 +59,7 @@ class RetrievedTable:
     sparse_rank: int | None = None
     via_expansion: bool = False
     """True when this table was pulled in by foreign-key expansion rather
-    than by either retriever — the join tables the proposal's example
+    than by either retriever - the join tables the proposal's example
     depends on arrive this way."""
 
 
@@ -171,10 +171,10 @@ def retrieve(
     ``mode`` selects which retrievers contribute, and exists so the Phase 6
     ablation can isolate each one's contribution to schema-linking recall:
 
-    - ``hybrid`` — dense + BM25 fused with reciprocal rank fusion. The default
+    - ``hybrid`` - dense + BM25 fused with reciprocal rank fusion. The default
       and the configuration the proposal describes.
-    - ``dense`` — embeddings only.
-    - ``sparse`` — BM25 only.
+    - ``dense`` - embeddings only.
+    - ``sparse`` - BM25 only.
 
     Setting ``hops=0`` disables foreign-key expansion, which is the other arm
     of the ablation. Both knobs are here rather than in the harness so the

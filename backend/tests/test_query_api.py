@@ -215,7 +215,7 @@ def test_manual_sql_executes(
 def test_manual_sql_goes_through_the_same_gates(
     client: TestClient, auth_headers: dict, connection_id: str
 ) -> None:
-    # Hand-written SQL is not more trusted than generated SQL — if anything
+    # Hand-written SQL is not more trusted than generated SQL - if anything
     # less, since it never passed through a prompt that forbade writes.
     body = client.post(
         "/api/v1/query/execute",

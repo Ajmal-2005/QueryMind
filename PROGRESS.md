@@ -6,7 +6,7 @@ Data Analytics Platform** capstone ([`proposal.md`](proposal.md)).
 Written so a new session can pick this up cold. Read this file, then
 [`docs/phase-6.md`](docs/phase-6.md) for the most recent detail.
 
-**Status: Phases 0–7 complete.** Report, deck and demo runbook are in
+**Status: Phases 0-7 complete.** Report, deck and demo runbook are in
 `docs/`.
 
 **The evaluation machinery is finished and has never produced an accuracy
@@ -21,7 +21,7 @@ A web platform where a user types a question in plain English against a live
 relational database and gets back validated SQL, a result table, a chart, and
 a written summary.
 
-The contribution is not the LLM call — it is the surrounding pipeline: schema
+The contribution is not the LLM call - it is the surrounding pipeline: schema
 linking that scales past the context window, a validation layer that catches
 hallucinated identifiers before execution, a self-correction loop driven by
 database error messages, and a safety model that makes the system safe to
@@ -55,7 +55,7 @@ cd backend && .venv/Scripts/python -m scripts.seed_demo_db
 It prints a path. In the app: **Add connection** → **SQLite (file)** → paste
 the path → **Test** → **Index schema** → then **Ask**.
 
-**Verification — CI runs exactly these:**
+**Verification - CI runs exactly these:**
 
 ```bash
 cd backend && .venv/Scripts/python -m pytest
@@ -79,7 +79,7 @@ cd frontend && npm run lint && npm run build
 | **No Docker** | Postgres, pgvector, and Redis have never run. App uses SQLite; embeddings stored as JSON. |
 | **Python 3.10.9** (proposal says 3.11+) | Code is 3.10-compatible; Docker image pins 3.11. |
 | **Spider/BIRD not downloaded** | Only the committed 10-question custom set is available to the harness. |
-| **No Pandas/NumPy** | Despite what an earlier draft of this file said, they were never installed. Phase 4 profiling uses the stdlib `statistics` module instead — a deliberate deviation from the proposal's stack, documented in [`docs/phase-4.md`](docs/phase-4.md). |
+| **No Pandas/NumPy** | Despite what an earlier draft of this file said, they were never installed. Phase 4 profiling uses the stdlib `statistics` module instead - a deliberate deviation from the proposal's stack, documented in [`docs/phase-4.md`](docs/phase-4.md). |
 
 Everything above is written and wired but unexercised. None of it is a
 blocker for Phase 4 except where noted.
@@ -90,15 +90,15 @@ blocker for Phase 4 except where noted.
 
 | Commit | Phase |
 |---|---|
-| `5280903` | 0 — Foundation: repo, CI, auth, health, eval harness |
-| `cd4b52d` | 1 — Connection manager, schema introspection, searchable index |
+| `5280903` | 0 - Foundation: repo, CI, auth, health, eval harness |
+| `cd4b52d` | 1 - Connection manager, schema introspection, searchable index |
 | `e1ea432` | UI rebuild on the Stitch design system |
-| `b639206` | 2 — NL→SQL core: intent, hybrid retrieval, generation |
-| `a9d3f05` | 3 — Validation gates, sandboxed execution, self-correction |
-| `d1330b8` | 4 — Analytics, visualization, dashboards, result cache |
-| `ebc8a36` | 5 — Conversation, corrections, glossary, semantic cache |
-| `f7a5ed2` | 6 — Evaluation harness, ablations, taxonomy, RBAC, usage |
-| _this_ | 7 — Final report, slide deck, demo runbook |
+| `b639206` | 2 - NL→SQL core: intent, hybrid retrieval, generation |
+| `a9d3f05` | 3 - Validation gates, sandboxed execution, self-correction |
+| `d1330b8` | 4 - Analytics, visualization, dashboards, result cache |
+| `ebc8a36` | 5 - Conversation, corrections, glossary, semantic cache |
+| `f7a5ed2` | 6 - Evaluation harness, ablations, taxonomy, RBAC, usage |
+| _this_ | 7 - Final report, slide deck, demo runbook |
 
 **547 backend tests pass.** ruff clean, frontend builds and lints clean.
 
@@ -106,7 +106,7 @@ blocker for Phase 4 except where noted.
 
 ## 5. What exists, by phase
 
-### Phase 0 — Foundation ✅
+### Phase 0 - Foundation ✅
 
 FastAPI + SQLAlchemy 2.0 backend, React 19 + TypeScript + Vite frontend,
 JWT auth with bcrypt and a `require_roles` factory, health endpoint probing
@@ -115,22 +115,22 @@ Compose (pgvector + Redis + backend + sample DB, **never run**), and the
 evaluation harness (Spider/BIRD/custom loaders, section-9 metrics, CLI
 runner).
 
-### Phase 1 — Connection & Schema Layer ✅
+### Phase 1 - Connection & Schema Layer ✅
 
 - **Credentials**: Fernet-encrypted at rest, never logged, never returned by
   the API.
 - **Introspection**: tables, columns, types, PK/FK, indexes, row estimates,
-  sample values — all through SQLAlchemy's dialect-agnostic `Inspector`, so
+  sample values - all through SQLAlchemy's dialect-agnostic `Inspector`, so
   one code path serves Postgres, MySQL, and SQLite.
 - **Descriptions**: deterministic templates naming join paths and known
   values, with abbreviations expanded (`cust_ref_id_v2` → "customer reference
   identifier v2"). This is the text that gets embedded.
-- **Embeddings**: provider interface — OpenAI `text-embedding-3-small` when a
+- **Embeddings**: provider interface - OpenAI `text-embedding-3-small` when a
   key exists, local hashing vectorizer otherwise.
 - **FK graph**: undirected adjacency, one-hop expansion, shortest join paths.
 - **UI**: connections page with add/test/index and a schema explorer.
 
-### Phase 2 — NL→SQL Core ✅ (never run against a live model)
+### Phase 2 - NL→SQL Core ✅ (never run against a live model)
 
 - **Intent analyzer**: rule-based classification (aggregation, comparison,
   trend, ranking, filter, ambiguous), follow-up resolution against session
@@ -147,7 +147,7 @@ runner).
 - **UI**: Ask workspace with SQL highlighting and a "How this was built"
   provenance panel.
 
-### Phase 3 — Validation, Safety & Execution ✅
+### Phase 3 - Validation, Safety & Execution ✅
 
 - **Four gates** (`services/validation/gates.py`) on sqlglot: syntax →
   safety → schema → cost. Safety runs before schema deliberately.
@@ -167,13 +167,13 @@ runner).
 rejections, plus independent confirmation that the connection itself refuses
 writes.
 
-### Phase 4 — Analytics & Visualization ✅ (narrative LLM path never run)
+### Phase 4 - Analytics & Visualization ✅ (narrative LLM path never run)
 
-- **Profiling** (F14): type inference from *values*, not declared types —
+- **Profiling** (F14): type inference from *values*, not declared types -
   SQLite returns dates as strings. Every column records how it was classified.
   Chart selection, outliers and trends all read the profile, never the rows.
 - **Chart selection** (F11): ordered rules, first match wins, each carrying
-  the sentence that produced it. Table is the floor — never wrong, only less
+  the sentence that produced it. Table is the floor - never wrong, only less
   illuminating.
 - **Manual override** (F12): type and axis pickers, populated from the same
   profile so the two cannot disagree about what counts as a category.
@@ -181,7 +181,7 @@ writes.
 - **Trends** (F16): least-squares direction, deltas, growth rates, trailing
   moving average. Declines with a reason when the result is not a series.
 - **PII masking**: column-name *and* value-pattern detection, applied at the
-  boundary — including the profile's own sample values, which is where the
+  boundary - including the profile's own sample values, which is where the
   first implementation leaked.
 - **Narrative** (F13): the model gets exact statistics plus 20 masked rows,
   never raw data to add up. `TemplateNarrator` writes a real summary offline.
@@ -193,9 +193,9 @@ writes.
   on every hit so no benchmark can misread it.
 
 **Milestone gate met**: every query returns a table, an appropriate chart, and
-a written summary — confirmed in the running app.
+a written summary - confirmed in the running app.
 
-### Phase 5 — Conversation & Learning ✅ (every prompt change is unmeasured)
+### Phase 5 - Conversation & Learning ✅ (every prompt change is unmeasured)
 
 Everything here is about the system knowing what the schema does not.
 
@@ -212,28 +212,28 @@ Everything here is about the system knowing what the schema does not.
 - **Suggestions** (F23): starters generated from the indexed schema.
 - **Glossary** (F24): literal term matching, injected into the prompt.
 - **Semantic cache** (F25): skips generation for a question already answered
-  in different words — behind a 0.93 threshold, polarity guards, and full
+  in different words - behind a 0.93 threshold, polarity guards, and full
   visibility in the UI.
 
 **Caveat for the report**: this phase changes prompts, and prompt quality
 cannot be measured without a model. Every feature is a mechanism whose effect
 is unmeasured.
 
-### Phase 6 — Hardening & Evaluation ✅ (machinery complete, no accuracy yet)
+### Phase 6 - Hardening & Evaluation ✅ (machinery complete, no accuracy yet)
 
 - **Predictor slot filled**: `pipeline.run` is wired into the harness, with
   ablation knobs threaded through the production code path rather than
   reimplemented.
-- **Gold tables** parsed from benchmark SQL with sqlglot — a regex would
+- **Gold tables** parsed from benchmark SQL with sqlglot - a regex would
   inflate recall by missing joins and counting CTE names.
 - **Error taxonomy**: ordered wrong_table → wrong_join → wrong_aggregation →
   wrong_filter → wrong_column → wrong_ordering, most fundamental first.
-- **Ablation study, with real numbers** — and a `discriminates()` guard that
+- **Ablation study, with real numbers** - and a `discriminates()` guard that
   declares the current result non-discriminative, which it is: the 8-table
   demo schema is saturated at 98% coverage. FK expansion helps consistently
   (+2.5 recall, +10 all-found); hybrid fusion shows no benefit at this scale.
 - **Load test**: 200/200 succeed at 20-way concurrency, but throughput is flat
-  at ~8.5 req/s while latency grows linearly — complete serialisation on
+  at ~8.5 req/s while latency grows linearly - complete serialisation on
   SQLite's single writer.
 - **RBAC**: `require_roles` finally used, gating the audit trail.
 - **Usage endpoint** (Appendix B): tokens, estimated cost, per-user breakdown
@@ -252,42 +252,42 @@ backend/app/
                    learning (corrections, glossary)
   schemas/         Pydantic contracts
   services/
-    connection/    manager.py       — URLs, credentials, engines
-    introspect/    introspector.py  — schema extraction
-                   describe.py      — NL descriptions (embedded text)
-    linking/       embeddings.py    — provider interface + local fallback
-                   graph.py         — FK graph, one-hop expansion
-                   indexer.py       — introspect → describe → embed → store
-                   retriever.py     — dense + BM25 + RRF + expansion
-    generation/    intent.py        — classification, coreference, dates
-                   prompts.py       — DDL rendering, dialect rules
-                   llm.py           — Anthropic / stub / scripted
-                   explain.py       — SQL → clause-by-clause English (F21)
-                   pipeline.py      — THE ORCHESTRATOR (generate→validate→execute)
-                   generator.py     — session history + few-shot lookups only
-    validation/    gates.py         — the four gates
-    execution/     runner.py        — sandboxed execution, EXPLAIN
-    analytics/     profile.py       — type inference + descriptive stats (F14)
-                   charts.py        — rule-based chart selection (F11/F12)
-                   outliers.py      — IQR + z-score (F15)
-                   trends.py        — deltas, growth, moving average (F16)
-                   masking.py       — PII masking on the outbound path
-                   narrative.py     — LLM summary + offline template narrator (F13)
-                   export.py        — CSV / JSON / XLSX / PDF (F17)
-                   analyze.py       — composes the four local steps
-    cache/         store.py         — Redis / in-process / null backends
-                   results.py       — cached execution, invalidation
-                   semantic.py      — question-level cache, skips generation (F25)
-    learning/      corrections.py   — similarity-selected examples (F22)
-                   suggestions.py   — schema-aware starters (F23)
-                   glossary.py      — business term matching (F24)
-  workers/         EMPTY — Celery, Phase 6
+    connection/    manager.py       - URLs, credentials, engines
+    introspect/    introspector.py  - schema extraction
+                   describe.py      - NL descriptions (embedded text)
+    linking/       embeddings.py    - provider interface + local fallback
+                   graph.py         - FK graph, one-hop expansion
+                   indexer.py       - introspect → describe → embed → store
+                   retriever.py     - dense + BM25 + RRF + expansion
+    generation/    intent.py        - classification, coreference, dates
+                   prompts.py       - DDL rendering, dialect rules
+                   llm.py           - Anthropic / stub / scripted
+                   explain.py       - SQL → clause-by-clause English (F21)
+                   pipeline.py      - THE ORCHESTRATOR (generate→validate→execute)
+                   generator.py     - session history + few-shot lookups only
+    validation/    gates.py         - the four gates
+    execution/     runner.py        - sandboxed execution, EXPLAIN
+    analytics/     profile.py       - type inference + descriptive stats (F14)
+                   charts.py        - rule-based chart selection (F11/F12)
+                   outliers.py      - IQR + z-score (F15)
+                   trends.py        - deltas, growth, moving average (F16)
+                   masking.py       - PII masking on the outbound path
+                   narrative.py     - LLM summary + offline template narrator (F13)
+                   export.py        - CSV / JSON / XLSX / PDF (F17)
+                   analyze.py       - composes the four local steps
+    cache/         store.py         - Redis / in-process / null backends
+                   results.py       - cached execution, invalidation
+                   semantic.py      - question-level cache, skips generation (F25)
+    learning/      corrections.py   - similarity-selected examples (F22)
+                   suggestions.py   - schema-aware starters (F23)
+                   glossary.py      - business term matching (F24)
+  workers/         EMPTY - Celery, Phase 6
 backend/evaluation/  datasets  metrics  runner
-                   gold.py       — gold-table extraction (sqlglot)
-                   harness.py    — throwaway indexed DB per run
-                   predictors.py — pipeline.run wired in (slot now filled)
-                   taxonomy.py   — how a wrong answer is wrong
-                   ablations.py  — retrieval ablation + discriminative guard
+                   gold.py       - gold-table extraction (sqlglot)
+                   harness.py    - throwaway indexed DB per run
+                   predictors.py - pipeline.run wired in (slot now filled)
+                   taxonomy.py   - how a wrong answer is wrong
+                   ablations.py  - retrieval ablation + discriminative guard
 backend/scripts/     seed_demo_db  load_test
 frontend/src/
   api/             typed client (client, auth, health, connections, query,
@@ -308,21 +308,21 @@ docs/              phase-0.md … phase-6.md
 
 ---
 
-## 7. Decisions already made — do not re-litigate
+## 7. Decisions already made - do not re-litigate
 
 | Decision | Why |
 |---|---|
 | **`temperature=0` is impossible** | Sampling params return 400 on Claude Sonnet 5 and every current frontier model. The proposal claims it as a design property; **this must be corrected in the final report.** Determinism comes from prompt + `effort`. |
-| **Structured output, not prefill** | Assistant prefill is rejected on current models. Uses `output_config.format` with a JSON schema — response is guaranteed to parse. |
+| **Structured output, not prefill** | Assistant prefill is rejected on current models. Uses `output_config.format` with a JSON schema - response is guaranteed to parse. |
 | **Intent analysis is rule-based** | The proposal budgets 300 ms; an LLM round trip cannot meet it. Wrong label degrades quality, not correctness. |
 | **RRF, not score normalization** | Cosine and BM25 are on different scales; calibrating them is fragile. RRF reads only rank position. |
 | **Safety before schema** | Otherwise `DROP TABLE misspelled` returns as a retryable schema error and re-enters the loop. |
 | **Safety failures never retry** | Retrying a DROP turns one blocked write into three requests for the same forbidden thing. Asserted on every adversarial case. |
 | **SQLite added as a target dialect** | Out of proposal scope, but introspection is dialect-agnostic so it cost nothing and made everything demonstrable without Docker. |
 | **Descriptions are templates, not LLM-written** | 400 tables = 400 LLM calls, and non-determinism makes retrieval evaluation irreproducible. |
-| **Local hashing embedder as fallback** | Lexical overlap only — will not match "revenue" to "sales". Honest dev infrastructure. `IndexResult` carries the embedder name so no run can be misreported. |
+| **Local hashing embedder as fallback** | Lexical overlap only - will not match "revenue" to "sales". Honest dev infrastructure. `IndexResult` carries the embedder name so no run can be misreported. |
 | **Stub provider rather than hard failure** | Pipeline/API/UI exercisable offline. Stub is loud: confidence 0, explicit assumption, model name `stub`. |
-| **Manual SQL uses identical gates** | Hand-edited SQL is *less* trusted — it never passed through a prompt forbidding writes. |
+| **Manual SQL uses identical gates** | Hand-edited SQL is *less* trusted - it never passed through a prompt forbidding writes. |
 | **Only executed queries become few-shot examples** | A valid query that failed at runtime teaches the wrong thing. |
 | **Stdlib `statistics`, not Pandas/NumPy** | The proposal's stack names them; the honest cost/benefit did not justify a 50 MB dependency for ~100 lines of arithmetic over ≤10,000 rows, and type inference had to be hand-written regardless. **Must be stated in the final report.** |
 | **Chart selection is rule-based, like intent** | Fully determined by result shape; an LLM call would cost more than the whole analytics stage, and a wrong choice is one click from fixed. |
@@ -350,11 +350,11 @@ docs/              phase-0.md … phase-6.md
 2. Spider/BIRD not downloaded. The loaders and gold-table extraction are
    ready; without them the ablation runs on an 8-table schema that cannot
    discriminate between retrieval methods.
-3. ~~Harness predictor slot~~ — **done in Phase 6**; `pipeline.run` is wired
+3. ~~Harness predictor slot~~ - **done in Phase 6**; `pipeline.run` is wired
    in behind `--predictor pipeline`.
 
 **Written but never executed:**
-4. Anthropic client (no live call ever made) — now *two* of them: the SQL
+4. Anthropic client (no live call ever made) - now *two* of them: the SQL
    generator and Phase 4's `AnthropicNarrator`. Every narrative so far came
    from the template narrator. Phase 5 changed the prompt substantially
    (glossary, similarity-selected examples) and **none of it has reached a
@@ -362,52 +362,52 @@ docs/              phase-0.md … phase-6.md
 5. Postgres/MySQL: introspection, execution, session guards, `pgvector`.
 6. Docker Compose stack.
 7. Statement timeout (no test forces a slow enough query).
-8. `RedisCache` — written in Phase 4, exercised only as `MemoryCache`.
-9. Cross-vocabulary semantic caching — the local embedder matches on word
+8. `RedisCache` - written in Phase 4, exercised only as `MemoryCache`.
+9. Cross-vocabulary semantic caching - the local embedder matches on word
    overlap, so "revenue" will never match "sales" until a real embedding
    provider is configured.
-10. Embedder comparison (hashing vs `text-embedding-3-small`) — needs an
+10. Embedder comparison (hashing vs `text-embedding-3-small`) - needs an
     `OPENAI_API_KEY` to have a second arm.
-11. Accessibility — considered while building, never actually audited.
-12. Concurrency beyond ~8.5 req/s — measured and diagnosed (SQLite single
+11. Accessibility - considered while building, never actually audited.
+12. Concurrency beyond ~8.5 req/s - measured and diagnosed (SQLite single
     writer, one uvicorn worker), not fixed. Needs Postgres.
 
 **Scoped but not built:**
-8. `EXPLAIN`-based cost estimation — `explain()` exists and is tested, but
+8. `EXPLAIN`-based cost estimation - `explain()` exists and is tested, but
    the cost gate only enforces a row cap.
 9. OpenAI GPT-5 as secondary provider (A/B + failover).
-10. Retrieval at scale — demo schema has 8 tables; nothing establishes recall
+10. Retrieval at scale - demo schema has 8 tables; nothing establishes recall
     at 400.
 
 ---
 
 ## 9. Remaining phases
 
-### Phase 4 — Analytics & Visualization (weeks 10–11) — ✅ DONE
+### Phase 4 - Analytics & Visualization (weeks 10-11) - ✅ DONE
 
 See [`docs/phase-4.md`](docs/phase-4.md).
 
-### Phase 5 — Conversation & Learning (weeks 12–13) — ✅ DONE
+### Phase 5 - Conversation & Learning (weeks 12-13) - ✅ DONE
 
 See [`docs/phase-5.md`](docs/phase-5.md).
 
-### Phase 6 — Hardening & Evaluation (weeks 14–15) — ✅ DONE
+### Phase 6 - Hardening & Evaluation (weeks 14-15) - ✅ DONE
 
 See [`docs/phase-6.md`](docs/phase-6.md). The machinery is complete; the
 numbers are not, and cannot be until an API key exists.
 
-### Phase 7 — Presentation (week 16) — ✅ DONE
+### Phase 7 - Presentation (week 16) - ✅ DONE
 
-- [`docs/final-report.md`](docs/final-report.md) — the report
-- [`docs/slides.md`](docs/slides.md) — 16 slides with speaker notes
-- [`docs/demo-script.md`](docs/demo-script.md) — live runbook, likely
+- [`docs/final-report.md`](docs/final-report.md) - the report
+- [`docs/slides.md`](docs/slides.md) - 16 slides with speaker notes
+- [`docs/demo-script.md`](docs/demo-script.md) - live runbook, likely
   questions, and what to do when something breaks
 
 ---
 
 ## 10. Immediate next steps
 
-Phases 0–6 are complete. Everything below is blocked on the environment, not
+Phases 0-6 are complete. Everything below is blocked on the environment, not
 on engineering.
 
 1. **Set `ANTHROPIC_API_KEY`** in `backend/.env`, then:
@@ -429,7 +429,7 @@ on engineering.
    should lift the ~8.5 req/s ceiling the load test found.
 
 4. **Phase 7**: the report. `docs/phase-*.md` carry the decisions, the bugs
-   found, and — importantly — a "Not verified" section each, which is the
+   found, and - importantly - a "Not verified" section each, which is the
    honest backbone of the write-up.
 
 ---
@@ -438,8 +438,8 @@ on engineering.
 
 Established in this project and worth keeping:
 
-- **Stop at each phase boundary.** Complete a phase fully — including
-  verification and a `docs/phase-N.md` write-up — commit, summarize, and
+- **Stop at each phase boundary.** Complete a phase fully - including
+  verification and a `docs/phase-N.md` write-up - commit, summarize, and
   wait. Do not roll into the next phase unattended.
 - **Launch the app and show the result** after each phase.
 - **Write down what was NOT verified**, in the phase doc and the summary. The

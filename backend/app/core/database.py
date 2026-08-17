@@ -1,7 +1,7 @@
 """Application database session management.
 
 This is the *app's own* Postgres (users, connections, schema index, history)
-— not the user's target database, which is handled by the connection
+- not the user's target database, which is handled by the connection
 service with a separate read-only engine.
 """
 

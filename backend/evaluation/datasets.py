@@ -42,7 +42,7 @@ def _require(path: Path, dataset: str) -> None:
 
 
 def load_spider_dev(limit: int | None = None) -> list[BenchmarkExample]:
-    """Spider dev set — 1,034 questions across 20 databases."""
+    """Spider dev set - 1,034 questions across 20 databases."""
     path = DATA_ROOT / "spider" / "dev.json"
     _require(path, "spider")
 
@@ -60,7 +60,7 @@ def load_spider_dev(limit: int | None = None) -> list[BenchmarkExample]:
 
 
 def load_bird_dev(limit: int | None = None) -> list[BenchmarkExample]:
-    """BIRD dev set — 1,534 questions over large, dirty schemas."""
+    """BIRD dev set - 1,534 questions over large, dirty schemas."""
     path = DATA_ROOT / "bird" / "dev.json"
     _require(path, "bird")
 

@@ -67,5 +67,5 @@ def health(db: Session = Depends(get_db)) -> HealthResponse:
 
 @router.get("/health/live", summary="Liveness probe")
 def liveness() -> dict:
-    """Cheap probe for orchestrators — no dependency checks."""
+    """Cheap probe for orchestrators - no dependency checks."""
     return {"status": "alive"}

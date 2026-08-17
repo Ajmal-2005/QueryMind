@@ -1,7 +1,7 @@
 /** Business glossary (F24) and saved corrections (F22).
  *
- *  Both are the same idea from two directions — things this deployment knows
- *  that the schema does not — so they share a page. A glossary term is an
+ *  Both are the same idea from two directions - things this deployment knows
+ *  that the schema does not - so they share a page. A glossary term is an
  *  explicit definition; a correction is one learned by being told.
  */
 
@@ -146,7 +146,7 @@ export function GlossaryPage() {
 
         <Field
           label="SQL expression (optional)"
-          hint="A fragment, not a statement — no semicolons or comments."
+          hint="A fragment, not a statement - no semicolons or comments."
         >
           <Input
             value={expression}
@@ -255,7 +255,7 @@ export function GlossaryPage() {
           </div>
         ) : (
           <p className="rounded-xl border border-dashed border-subtle p-6 text-center text-body-md text-on-surface-variant">
-            Nothing yet. When a query comes back wrong, use “This SQL is wrong —
+            Nothing yet. When a query comes back wrong, use “This SQL is wrong -
             fix it” on the answer.
           </p>
         )}

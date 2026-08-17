@@ -32,7 +32,7 @@ def _embedding_column():
 
     On Postgres this is a real ``vector`` column that pgvector can index and
     search with ``<=>``. Everywhere else it degrades to JSON and similarity
-    is computed in Python — fine for the hundreds of tables a schema has,
+    is computed in Python - fine for the hundreds of tables a schema has,
     and it keeps local development free of a Postgres dependency.
     """
     try:

@@ -1,7 +1,7 @@
 """Query explanation (F21): what the SQL actually does, clause by clause.
 
 The generation already returns a prose `explanation`, but that is the model's
-account of its own work — it describes what the model *meant*, and on the
+account of its own work - it describes what the model *meant*, and on the
 occasions the SQL does something else the explanation follows the intention
 rather than the query. This module reads the parsed statement instead, so it
 cannot drift from what will run.
@@ -45,7 +45,7 @@ class Step:
 
     order: int
     clause: str
-    """The SQL keyword this step corresponds to — FROM, WHERE, GROUP BY…"""
+    """The SQL keyword this step corresponds to - FROM, WHERE, GROUP BY…"""
 
     title: str
     detail: str
@@ -150,7 +150,7 @@ def explain(sql: str, dialect: Dialect = Dialect.SQLITE) -> Explanation:
     explanation = Explanation(tables=_table_names(statement))
     order = 1
 
-    # Presented in evaluation order — FROM before SELECT — because that is the
+    # Presented in evaluation order - FROM before SELECT - because that is the
     # order that makes a query make sense, and it is not the order it is
     # written in. Readers who have only ever seen the written order usually
     # find this the most useful part.
@@ -216,7 +216,7 @@ def explain(sql: str, dialect: Dialect = Dialect.SQLITE) -> Explanation:
                 clause="HAVING",
                 title="Drop groups that do not qualify",
                 detail=(
-                    "Filters the grouped rows — unlike WHERE, which filtered "
+                    "Filters the grouped rows - unlike WHERE, which filtered "
                     f"before grouping: {_describe_condition(having.this)}."
                 ),
                 sql=having.sql(),
@@ -302,7 +302,7 @@ def explain(sql: str, dialect: Dialect = Dialect.SQLITE) -> Explanation:
                     else "Cap the number of rows"
                 ),
                 detail=(
-                    "Everything past this point is discarded — a different "
+                    "Everything past this point is discarded - a different "
                     "sort order would return different rows."
                 ),
                 sql=limit.sql(),

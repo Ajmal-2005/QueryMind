@@ -2,7 +2,7 @@
 
     python -m scripts.check_llm
 
-A key that lists models can still fail every completion — that is exactly what
+A key that lists models can still fail every completion - that is exactly what
 happened with this project's OpenAI key, which returns 429 `insufficient_quota`
 on every request while looking perfectly healthy otherwise. So this does not
 check configuration; it sends one real question through the whole pipeline and
@@ -35,7 +35,7 @@ def main() -> int:
     if not configured:
         print(
             "\nNo provider key set. Add one to backend/.env:\n"
-            "  GEMINI_API_KEY=...   free, no billing — https://aistudio.google.com/apikey\n"
+            "  GEMINI_API_KEY=...   free, no billing - https://aistudio.google.com/apikey\n"
             "  OPENAI_API_KEY=...   needs billing\n"
             "  ANTHROPIC_API_KEY=...needs billing"
         )
@@ -76,7 +76,7 @@ def main() -> int:
         print(f"Tokens             : {generation.total_tokens}")
 
     if model == "stub":
-        print("\nRESULT: no provider answered — this is a placeholder, not a")
+        print("\nRESULT: no provider answered - this is a placeholder, not a")
         print("translation. Reason reported by the pipeline:")
         for assumption in generation.assumptions if generation else []:
             print(f"  {assumption}")

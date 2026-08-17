@@ -154,7 +154,7 @@ export function AskPage() {
               ))}
               {suggestions?.length === 0 && (
                 <span className="text-body-md text-outline">
-                  Nothing to suggest — this schema has no obvious measures.
+                  Nothing to suggest - this schema has no obvious measures.
                 </span>
               )}
             </div>
@@ -195,7 +195,7 @@ export function AskPage() {
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={(e) => {
-              // Enter sends; Shift+Enter is a newline — the convention every
+              // Enter sends; Shift+Enter is a newline - the convention every
               // chat surface uses.
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()
@@ -453,7 +453,7 @@ function Provenance({ response }: { response: QueryResponse }) {
               {response.glossary_terms.map((term) => (
                 <li key={term.term}>
                   <span className="font-mono text-on-surface">{term.term}</span>{' '}
-                  — {term.definition}
+                  - {term.definition}
                   {term.sql_expression && (
                     <code className="ml-1 rounded bg-surface-container-low px-1 font-mono text-[11px]">
                       {term.sql_expression}

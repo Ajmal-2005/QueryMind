@@ -2,7 +2,7 @@
 without calling a model.
 
 Composed as one function because the four steps have a strict dependency
-order — profile first, then the three readers of it — and because the query
+order - profile first, then the three readers of it - and because the query
 pipeline, the export path, and dashboard refresh all need exactly the same
 thing. Splitting it would give three call sites three chances to disagree.
 

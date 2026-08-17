@@ -20,7 +20,7 @@ function readStoredUser(): User | null {
   try {
     return JSON.parse(raw) as User
   } catch {
-    // Corrupted entry — drop it rather than crash the app on boot.
+    // Corrupted entry - drop it rather than crash the app on boot.
     localStorage.removeItem(USER_KEY)
     return null
   }

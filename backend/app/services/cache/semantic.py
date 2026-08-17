@@ -1,7 +1,7 @@
 """Semantic query cache (F25).
 
 Phase 4's cache keys on the *SQL*, so it only helps once the model has already
-been called — the expensive part is over by then. This one keys on the
+been called - the expensive part is over by then. This one keys on the
 *question*, and skips generation entirely when someone asks something the
 system has already answered in different words.
 
@@ -41,7 +41,7 @@ from app.services.linking.embeddings import Embedder, cosine_similarity, get_emb
 
 log = get_logger(__name__)
 
-# Deliberately severe. See the module docstring — the failure mode here is
+# Deliberately severe. See the module docstring - the failure mode here is
 # confidently answering a question nobody asked.
 SIMILARITY_THRESHOLD = 0.93
 

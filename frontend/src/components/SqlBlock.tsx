@@ -23,7 +23,7 @@ type Token = { text: string; kind: 'keyword' | 'string' | 'number' | 'plain' }
 
 /** Minimal SQL tokenizer for display.
  *
- *  Deliberately not a parser — highlighting is a readability aid, and the
+ *  Deliberately not a parser - highlighting is a readability aid, and the
  *  authoritative parse happens server-side with sqlglot in phase 3.
  */
 function tokenize(sql: string): Token[] {

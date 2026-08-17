@@ -182,7 +182,7 @@ function TableDetail({ table }: { table: SchemaTable }) {
             size={16}
             className="transition-transform group-open:rotate-90"
           />
-          Indexed description — the text retrieval searches
+          Indexed description - the text retrieval searches
         </summary>
         <p className="mx-4 mb-4 rounded-md border border-subtle bg-surface-container-lowest p-3 text-code-sm leading-relaxed text-on-surface-variant">
           {table.description}

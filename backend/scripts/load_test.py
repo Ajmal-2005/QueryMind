@@ -2,7 +2,7 @@
 
     python -m scripts.load_test --users 20 --requests 200
 
-Not a benchmark of the language model — with no API key the stub answers
+Not a benchmark of the language model - with no API key the stub answers
 instantly, and the numbers below measure the *plumbing*: connection pooling,
 the result cache, the gates, JSON serialisation, and whether anything
 deadlocks when twenty people ask at once.
@@ -26,7 +26,7 @@ import httpx
 
 # 127.0.0.1, never "localhost". On a machine where localhost resolves to ::1
 # first and the server listens only on IPv4, every request pays a ~2 s
-# connection timeout before falling back — which this script originally
+# connection timeout before falling back - which this script originally
 # measured and misattributed to the application.
 DEFAULT_BASE = "http://127.0.0.1:8000/api/v1"
 

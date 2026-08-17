@@ -1,6 +1,6 @@
 /** One answered question, fully rendered: chart, table, statistics, summary.
  *
- *  The Phase 4 deliverable in one component — every query comes back with a
+ *  The Phase 4 deliverable in one component - every query comes back with a
  *  table, an appropriate chart, and a written summary. Shared by the Ask page
  *  and reused for dashboard tiles, so the two cannot drift apart.
  */
@@ -86,7 +86,7 @@ export function ResultView({
       {result.cached && (
         <p className="flex items-center gap-1.5 text-[11px] text-outline">
           <Icon name="bolt" size={12} />
-          Served from the result cache — this query did not re-run against the
+          Served from the result cache - this query did not re-run against the
           database, so the timing above is the cache lookup.
         </p>
       )}

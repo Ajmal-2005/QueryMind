@@ -97,7 +97,7 @@ def test_examples_are_capped_and_deduplicated(db: Session, demo_connection) -> N
         _executed(db, demo_connection, f"revenue by region {n}", sql)
 
     examples = similar_examples(db, demo_connection.id, "revenue by region", limit=3)
-    # Identical SQL, so one lesson — not three copies of it.
+    # Identical SQL, so one lesson - not three copies of it.
     assert len(examples) == 1
 
 

@@ -124,7 +124,7 @@ def test_history_does_not_leak_across_sessions(db, indexed) -> None:
 
 
 def test_a_successful_query_becomes_a_few_shot_example(db, indexed) -> None:
-    # Only executed queries qualify — the wiring Phase 5 replaces with
+    # Only executed queries qualify - the wiring Phase 5 replaces with
     # similarity selection.
     _run(db, indexed, _client(), question="How many customers?")
 
@@ -146,7 +146,7 @@ def test_a_failed_query_does_not_become_an_example(db, indexed) -> None:
 def test_history_returns_resolved_questions_so_chains_accumulate(db, indexed) -> None:
     """Turn three must see turn two's *resolved* text, not the ellipsis typed.
 
-    Reading `Query.question` back instead — which is what this did originally —
+    Reading `Query.question` back instead - which is what this did originally -
     silently dropped everything before the previous turn.
     """
     from app.models.query import Query, QueryStatus

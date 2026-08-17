@@ -21,7 +21,7 @@ import { Button } from '@/components/ui'
  *
  *  Styles are inlined by the browser only for attributes, not CSS classes, so
  *  the chart's own stroke/fill attributes carry over but the surrounding theme
- *  does not — hence the explicit white ground, which is also what a PDF wants.
+ *  does not - hence the explicit white ground, which is also what a PDF wants.
  */
 async function svgToPng(svg: SVGSVGElement, scale = 2): Promise<string | null> {
   const box = svg.getBoundingClientRect()

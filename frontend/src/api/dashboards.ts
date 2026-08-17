@@ -53,7 +53,7 @@ export async function deleteTile(
   await api.delete(`/dashboards/${dashboardId}/tiles/${tileId}`)
 }
 
-/** Re-run every tile. Nothing is precomputed — a dashboard showing last
+/** Re-run every tile. Nothing is precomputed - a dashboard showing last
  *  Tuesday's figures is worse than no dashboard. */
 export async function refreshDashboard(id: string): Promise<DashboardRefresh> {
   const { data } = await api.post<DashboardRefresh>(`/dashboards/${id}/refresh`)

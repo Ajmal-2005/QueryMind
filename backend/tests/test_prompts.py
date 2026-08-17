@@ -1,4 +1,4 @@
-"""Prompt construction — what actually reaches the model."""
+"""Prompt construction - what actually reaches the model."""
 
 import pytest
 
@@ -65,7 +65,7 @@ def test_schema_order_follows_retrieval_order(db, indexed) -> None:
 
 def test_unretrieved_tables_are_absent(db, indexed) -> None:
     # The whole point of schema linking: a 400-table schema must not be sent.
-    # The demo schema has 8 tables, so the default top_k of 6 excludes little —
+    # The demo schema has 8 tables, so the default top_k of 6 excludes little -
     # a tighter budget is what makes the exclusion observable here.
     prompt = _build(db, indexed, "How many customers do we have?", top_k=2, hops=0)
 

@@ -3,7 +3,7 @@
 Research question 2: can a loop driven by database error messages recover a
 meaningful fraction of initially failed queries?
 
-These tests establish the *mechanism* — that failures feed back, that repairs
+These tests establish the *mechanism* - that failures feed back, that repairs
 land, and critically that safety rejections never retry. The recovery *rate*
 is an empirical number that needs a real model and a benchmark; it cannot be
 measured with scripted responses.

@@ -95,7 +95,7 @@ class ForeignKeyGraph:
     def isolated_tables(self) -> set[str]:
         """Tables with no foreign keys in either direction.
 
-        Often lookup or audit tables — useful to surface, because they are
+        Often lookup or audit tables - useful to surface, because they are
         also where undocumented join conventions hide.
         """
         return {t for t, neighbors in self.adjacency.items() if not neighbors}

@@ -1,6 +1,6 @@
-# Slide deck — 16 slides, ~15 minutes
+# Slide deck - 16 slides, ~15 minutes
 
-One idea per slide. Speaker notes in blockquotes — say them, don't read the
+One idea per slide. Speaker notes in blockquotes - say them, don't read the
 slide aloud.
 
 ---
@@ -40,14 +40,14 @@ question → intent → schema linking → prompt → generation
          → validation → execution → analytics → narrative
 ```
 > One entry point: `pipeline.run()`. The evaluation harness calls that same
-> function — a harness that reimplements the pipeline measures the copy.
+> function - a harness that reimplements the pipeline measures the copy.
 
 ---
 
 **6 · Schema linking**
 - 400 tables do not fit in a prompt
 - Dense embeddings catch paraphrase; BM25 catches exact names
-- Fused by **rank**, not score — the two scales can't be calibrated reliably
+- Fused by **rank**, not score - the two scales can't be calibrated reliably
 - Then expand one hop along foreign keys
 
 > The junction table a join needs is exactly the table no retriever ranks
@@ -55,7 +55,7 @@ question → intent → schema linking → prompt → generation
 
 ---
 
-**7 · Safety — three independent layers**
+**7 · Safety - three independent layers**
 1. The prompt forbids writes
 2. Four gates: syntax → **safety** → schema → cost
 3. The connection is opened read-only
@@ -67,7 +67,7 @@ question → intent → schema linking → prompt → generation
 ---
 
 **8 · Result: 43 / 43 adversarial cases blocked**
-All hard rejections. A safety failure never retries — regenerating a refused
+All hard rejections. A safety failure never retries - regenerating a refused
 write turns one blocked request into three requests for the same thing.
 
 ---
@@ -90,7 +90,7 @@ Profile → chart → outliers → trend → narrative.
 ---
 
 **11 · Privacy**
-PII masked before any row leaves the deployment — by column name *and* value
+PII masked before any row leaves the deployment - by column name *and* value
 pattern.
 
 > Found in testing: the sample rows were masked but the profile's "most common
@@ -99,7 +99,7 @@ pattern.
 
 ---
 
-**12 · Measured result — schema linking**
+**12 · Measured result - schema linking**
 
 | arm | recall | all found |
 |---|---|---|
@@ -127,7 +127,7 @@ The `k=10` control retrieves everything and also scores 100%.
   never reads the question
 - Both Anthropic clients written, never called
 - Postgres, Redis, Docker: written, never run
-- `temperature=0` is impossible on current models — **the proposal is wrong**
+- `temperature=0` is impossible on current models - **the proposal is wrong**
 
 > I have not estimated a number in place of measuring one.
 
@@ -138,7 +138,7 @@ The `k=10` control retrieves everything and also scores 100%.
 Flat throughput = complete serialisation: SQLite's single writer.
 
 > Also: I misdiagnosed a 2 s latency as embedding cost. Every endpoint took
-> exactly 2028 ms — a constant across unrelated endpoints is the measurement,
+> exactly 2028 ms - a constant across unrelated endpoints is the measurement,
 > not the system. IPv6 fallback. 4 ms on `127.0.0.1`.
 
 ---
@@ -146,7 +146,7 @@ Flat throughput = complete serialisation: SQLite's single writer.
 **16 · Where it stands**
 - All 25 functional requirements implemented · 547 tests pass
 - Safety model verified and holding
-- Research questions **open** — one API key and two downloads from answerable
+- Research questions **open** - one API key and two downloads from answerable
 - Complete as software, incomplete as research, and honest about which
 
 ---

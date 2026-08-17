@@ -2,7 +2,7 @@
  *
  *  The backend's recommendation is a starting point, not a verdict. This lets
  *  the user pick a different type and different axes, and offers only the
- *  columns whose inferred kind makes sense for each slot — the axis lists come
+ *  columns whose inferred kind makes sense for each slot - the axis lists come
  *  from the same profile that produced the recommendation, so the two cannot
  *  disagree about what counts as a category.
  */

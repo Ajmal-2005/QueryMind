@@ -1,6 +1,6 @@
 /** Fix the SQL and teach the system (F22).
  *
- *  The correction is saved only if it passes the gates and runs — the server
+ *  The correction is saved only if it passes the gates and runs - the server
  *  enforces that, and the error comes back here. A correction that was taken
  *  on trust would propagate a mistake into every future answer instead of
  *  fixing one.
@@ -64,7 +64,7 @@ export function CorrectionEditor({
         className="flex items-center gap-1.5 text-label-md text-on-surface-variant transition-colors hover:text-primary"
       >
         <Icon name="edit" size={14} />
-        This SQL is wrong — fix it
+        This SQL is wrong - fix it
       </button>
     )
   }

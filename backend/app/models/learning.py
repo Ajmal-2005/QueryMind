@@ -1,6 +1,6 @@
 """What the system learns from its users (F22, F24).
 
-Two tables, both feeding the same place — the prompt. A correction is an
+Two tables, both feeding the same place - the prompt. A correction is an
 implicit lesson ("when I asked X, the right SQL was Y"); a glossary term is an
 explicit one ("'active user' means this predicate"). Both are retrieved by
 similarity to the current question and rendered into the prompt as context.
@@ -67,7 +67,7 @@ class Correction(Base):
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     embedding: Mapped[list | None] = mapped_column(_embedding_column(), nullable=True)
-    """Of the *question*, not the SQL — retrieval matches on what was asked."""
+    """Of the *question*, not the SQL - retrieval matches on what was asked."""
 
     verified: Mapped[bool] = mapped_column(Boolean, default=True)
     """The corrected SQL passed the gates and executed when it was saved.
@@ -83,7 +83,7 @@ class GlossaryTerm(Base):
     """A business term and what it means in SQL (F24).
 
     "Active user" is not in any schema. It is a definition the organisation
-    holds, and without it every model guesses — differently each time.
+    holds, and without it every model guesses - differently each time.
     """
 
     __tablename__ = "glossary_terms"
@@ -101,7 +101,7 @@ class GlossaryTerm(Base):
 
     term: Mapped[str] = mapped_column(String(200))
     definition: Mapped[str] = mapped_column(Text)
-    """Plain English — what the term means to the business."""
+    """Plain English - what the term means to the business."""
 
     sql_expression: Mapped[str | None] = mapped_column(Text, nullable=True)
     """The predicate or expression that implements it, when there is one."""

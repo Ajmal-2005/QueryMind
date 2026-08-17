@@ -40,13 +40,13 @@ DEFAULT_OPENAI_MODEL = "gpt-4.1"
 #
 # Pinned rather than `gemini-flash-latest`: a moving alias would make two runs
 # of the evaluation harness incomparable without recording which model each
-# used. Google retires these — `gemini-2.0-flash` returns 404 today — so if
+# used. Google retires these - `gemini-2.0-flash` returns 404 today - so if
 # this stops resolving, list what the key can see and pin a current one.
 DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite"
 
 MAX_OUTPUT_TOKENS = 4096
 
-# Retries for errors that genuinely recover — a 503 blip, a momentary rate
+# Retries for errors that genuinely recover - a 503 blip, a momentary rate
 # limit. Deliberately not for quota or auth failures, which never do.
 TRANSIENT_RETRIES = 2
 
@@ -72,7 +72,7 @@ SQL_RESPONSE_SCHEMA: dict = {
         },
         "confidence": {
             "type": "number",
-            "description": "0.0 to 1.0 — how likely this SQL answers the question.",
+            "description": "0.0 to 1.0 - how likely this SQL answers the question.",
         },
         "explanation": {
             "type": "string",
@@ -94,7 +94,7 @@ SQL_RESPONSE_SCHEMA: dict = {
 class GeminiSQLResponse(BaseModel):
     sql: str = Field(description="A single read-only SELECT statement.")
     confidence: float = Field(
-        description="0.0 to 1.0 — how likely this SQL answers the question."
+        description="0.0 to 1.0 - how likely this SQL answers the question."
     )
     explanation: str = Field(
         description="Plain-English description of what the query does, "
@@ -247,7 +247,7 @@ class GeminiClient:
         # succeeds immediately on retry. Failing over to the stub for a blip
         # would replace a real answer with a placeholder, which is a far worse
         # outcome than waiting a second. Quota and auth errors are not
-        # retried — those never recover.
+        # retried - those never recover.
         response = None
         last: Exception | None = None
         for attempt in range(TRANSIENT_RETRIES + 1):
@@ -300,8 +300,8 @@ class GeminiClient:
 class OpenAIClient:
     """The proposal's secondary provider, for A/B comparison and failover.
 
-    Structured output works the same way as the Anthropic path — a JSON schema
-    the response is guaranteed to satisfy — but through `response_format`
+    Structured output works the same way as the Anthropic path - a JSON schema
+    the response is guaranteed to satisfy - but through `response_format`
     rather than `output_config`. `strict` mode requires every property to be
     required and `additionalProperties` false, which `SQL_RESPONSE_SCHEMA`
     already is.
@@ -386,7 +386,7 @@ class StubClient:
 
     Emits syntactically valid SQL against the first retrieved table so the
     pipeline, the API, and the UI can be exercised end to end without a key.
-    It does not understand the question — every result is marked with a
+    It does not understand the question - every result is marked with a
     confidence of 0 and a loud assumption, and evaluation runs using it must
     be reported as a stub baseline, never as an accuracy figure.
     """
@@ -404,7 +404,7 @@ class StubClient:
                 "actually translated."
             ),
             assumptions=[
-                "No LLM provider is configured — this is a stub response, "
+                "No LLM provider is configured - this is a stub response, "
                 "not a real translation of the question."
             ],
             model="stub",
@@ -474,7 +474,7 @@ class FailoverClient:
                     "llm_failover_succeeded", provider=client.name, tried=len(errors)
                 )
                 # The stub's own wording says no provider is configured, which
-                # is wrong here — one was, and it failed. Say what happened.
+                # is wrong here - one was, and it failed. Say what happened.
                 if client.name == "stub":
                     # Every failure, not just the first: with a chain of
                     # providers, the first error is rarely the interesting one
@@ -486,7 +486,7 @@ class FailoverClient:
                     ] + [f"{e}" for e in errors]
             return generation
 
-        raise LLMError("Every provider failed — " + "; ".join(errors))
+        raise LLMError("Every provider failed - " + "; ".join(errors))
 
 
 def get_client() -> LLMClient:

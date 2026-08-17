@@ -1,7 +1,7 @@
 """Predictors: the thing being measured.
 
 Phase 0 left a stub here with a note saying the pipeline did not exist yet.
-It does now, and `pipeline_predictor` calls it — the real one, with the real
+It does now, and `pipeline_predictor` calls it - the real one, with the real
 gates and the real execution, so the harness measures the system rather than a
 sketch of it.
 
@@ -35,7 +35,7 @@ from evaluation.taxonomy import classify
 
 @dataclass
 class PredictorInfo:
-    """What produced a set of results — recorded alongside every run."""
+    """What produced a set of results - recorded alongside every run."""
 
     provider: str
     model: str

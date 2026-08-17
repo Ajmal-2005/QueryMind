@@ -2,7 +2,7 @@
 
 Two implementations behind one interface. ``OpenAIEmbedder`` is the real one
 from the proposal (``text-embedding-3-small``). ``HashingEmbedder`` is a
-deterministic local fallback so the indexing pipeline — and its tests — run
+deterministic local fallback so the indexing pipeline - and its tests - run
 with no API key, no network, and no cost.
 
 The fallback is a hashing vectorizer, not a learned model: it captures
@@ -111,7 +111,7 @@ class OpenAIEmbedder:
         response.raise_for_status()
         payload = response.json()
 
-        # Ordering is guaranteed by index, not by position — sort explicitly.
+        # Ordering is guaranteed by index, not by position - sort explicitly.
         ordered = sorted(payload["data"], key=lambda d: d["index"])
         return [item["embedding"] for item in ordered]
 

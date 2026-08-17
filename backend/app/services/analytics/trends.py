@@ -3,14 +3,14 @@
 Runs only when the result actually is a series: one temporal column, at least
 one numeric column, and one value per period. A result with several rows per
 period is a detail listing, not a trend, and averaging it here would invent a
-series the user never asked for — so that case is declined with a reason
+series the user never asked for - so that case is declined with a reason
 rather than answered badly.
 
 Direction comes from a least-squares slope over the whole series rather than
 from comparing the first and last points. Every period gets a vote that way,
 so a modest bump in the final month cannot by itself declare a declining
-series to be growing. It is not robust to a *large* outlier — least squares
-never is — and a genuine spike will still move the verdict, which is the
+series to be growing. It is not robust to a *large* outlier - least squares
+never is - and a genuine spike will still move the verdict, which is the
 correct outcome for a series that really did spike.
 """
 
@@ -61,7 +61,7 @@ class Trend:
     total_change: float = 0.0
     total_growth_rate: float | None = None
     average_growth_rate: float | None = None
-    """Mean of the period-over-period rates — the typical step, not the total."""
+    """Mean of the period-over-period rates - the typical step, not the total."""
 
     best_period: str | None = None
     worst_period: str | None = None
@@ -77,7 +77,7 @@ class Trend:
                 f"{self.last_value:,.2f} over {span}."
             )
         return (
-            f"{self.value_column} is {self.direction} — "
+            f"{self.value_column} is {self.direction} - "
             f"{self.total_growth_rate:+.1%} from {self.first_value:,.2f} to "
             f"{self.last_value:,.2f} over {span}."
         )
@@ -184,7 +184,7 @@ def analyze(
         if label in seen:
             return TrendResult(
                 reason=(
-                    f"{period.name} repeats — this is a detail listing, "
+                    f"{period.name} repeats - this is a detail listing, "
                     "not one value per period"
                 )
             )
@@ -193,7 +193,7 @@ def analyze(
 
     if len(series) < MIN_POINTS:
         return TrendResult(
-            reason=f"{len(series)} periods — need at least {MIN_POINTS} for a trend"
+            reason=f"{len(series)} periods - need at least {MIN_POINTS} for a trend"
         )
 
     # Chronological order, whatever the query's ORDER BY happened to be. The

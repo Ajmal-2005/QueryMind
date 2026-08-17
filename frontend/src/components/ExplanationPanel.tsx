@@ -2,7 +2,7 @@
  *
  *  Two independent readings sit side by side here: the model's prose, and a
  *  step list derived mechanically from the parsed SQL. Where they disagree,
- *  something is wrong — and that is exactly what this panel exists to make
+ *  something is wrong - and that is exactly what this panel exists to make
  *  visible, so it does not try to reconcile them.
  */
 
@@ -94,7 +94,7 @@ export function ExplanationPanel({
             </p>
             <p className="mt-1.5 text-[11px] text-outline">
               The steps above are read from the SQL itself. This paragraph is
-              the model describing its own intent — if the two disagree, trust
+              the model describing its own intent - if the two disagree, trust
               the steps.
             </p>
           </div>

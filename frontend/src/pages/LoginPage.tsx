@@ -14,7 +14,7 @@ const HIGHLIGHTS = [
   {
     icon: 'chat',
     title: 'Ask in plain English',
-    body: 'Questions become validated SQL — no query language required.',
+    body: 'Questions become validated SQL - no query language required.',
   },
   {
     icon: 'schema',
@@ -63,7 +63,7 @@ export function LoginPage() {
 
   return (
     <div className="grid h-full lg:grid-cols-2">
-      {/* Product panel — hidden on small screens, where the form is all that
+      {/* Product panel - hidden on small screens, where the form is all that
           matters. */}
       <section className="relative hidden flex-col justify-between border-r border-subtle bg-surface-container-lowest p-12 lg:flex">
         <div className="flex items-center gap-3">

@@ -11,13 +11,13 @@ one place the evaluation produces real measurements rather than scaffolding.
 
 Each arm turns off exactly one thing:
 
-- **dense-only** / **sparse-only** — does fusing the two retrievers beat
+- **dense-only** / **sparse-only** - does fusing the two retrievers beat
   either alone?
-- **no-expansion** (`hops=0`) — does walking the foreign-key graph recover
+- **no-expansion** (`hops=0`) - does walking the foreign-key graph recover
   the join tables ranking misses? This is the arm that speaks most directly
   to the proposal's motivating example, where a junction table no retriever
   ranks highly is nonetheless required for the join.
-- **top-k sweep** — how much of recall is just retrieving more?
+- **top-k sweep** - how much of recall is just retrieving more?
 
 The last one is the honest control. A recall win that a larger `k` also buys
 is not a win for the method, and reporting it as one would be the easiest
@@ -52,7 +52,7 @@ class ArmResult:
     """Mean fraction of gold tables retrieved."""
 
     perfect: int
-    """Questions where every gold table was found — the metric that matters,
+    """Questions where every gold table was found - the metric that matters,
     because a query needs *all* its tables, not most of them."""
 
     perfect_rate: float
@@ -62,7 +62,7 @@ class ArmResult:
     mean_latency_ms: float
     coverage: float = 0.0
     """Mean fraction of the whole schema retrieved. The number that decides
-    whether this arm's recall means anything — see `discriminates()`."""
+    whether this arm's recall means anything - see `discriminates()`."""
 
     misses: list[str] = field(default_factory=list)
     """Gold tables never retrieved, for the error analysis."""
@@ -135,7 +135,7 @@ def discriminates(results: list[ArmResult], schema_size: int) -> tuple[bool, str
     spread = max(r.recall for r in results) - min(r.recall for r in results)
     if spread < 0.05:
         return False, (
-            f"every arm lands within {spread:.1%} of the others — too close to "
+            f"every arm lands within {spread:.1%} of the others - too close to "
             "attribute to the method rather than to noise."
         )
 
@@ -186,7 +186,7 @@ def run(
 
 
 def as_table(results: list[ArmResult]) -> str:
-    """ASCII only — Windows consoles mangle box drawing."""
+    """ASCII only - Windows consoles mangle box drawing."""
     if not results:
         return "  (no arms run)"
 

@@ -6,12 +6,12 @@ the result cache makes repeats instant.
 
 ---
 
-## Open with these — they land every time
+## Open with these - they land every time
 
 | Question | Shows | Rows |
 |---|---|---|
 | **Which product categories generated the most revenue?** | 3-table join, aggregation, bar chart | 12 |
-| **Which customers have never placed an order?** | LEFT JOIN anti-join — the query people expect it to fail | 11 |
+| **Which customers have never placed an order?** | LEFT JOIN anti-join - the query people expect it to fail | 11 |
 | **Show monthly revenue trend for completed orders** | Date grouping, line chart, trend analysis | 24 |
 | **Which suppliers have the longest average lead time?** | Junction table reached by FK expansion | 5 |
 
@@ -29,7 +29,7 @@ WHERE o.id IS NULL
 > shape people assume these systems get wrong."*
 
 **"Which suppliers have the longest average lead time?"** is the one to
-explain retrieval with — `product_suppliers` is a junction table with a
+explain retrieval with - `product_suppliers` is a junction table with a
 cryptic name that no retriever ranks highly. It arrives through foreign-key
 expansion, and the provenance panel marks it with `↳`.
 
@@ -47,7 +47,7 @@ expansion, and the provenance panel marks it with `↳`.
 
 ## Feature showcases
 
-**Business glossary (F24)** — ask:
+**Business glossary (F24)** - ask:
 
 > **How many active customers are there per region?**
 
@@ -55,24 +55,24 @@ expansion, and the provenance panel marks it with `↳`.
 `EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.id)`, and the
 provenance panel lists the definition it applied.
 
-**Clarification (F20)** — ask:
+**Clarification (F20)** - ask:
 
 > **show me something**
 
 Returns a targeted question plus three clickable rewrites. Click one.
 
-**Multi-turn (F19)** — chains accumulate:
+**Multi-turn (F19)** - chains accumulate:
 
 > **What was total revenue by month?**
 > then **break that down by region**
 > then **just the north region**
 
 Turn three resolves to *"What was total revenue by month?, grouped
-additionally by: region, restricted to: the north region"* — it keeps the
+additionally by: region, restricted to: the north region"* - it keeps the
 measure from turn one and the grouping from turn two. The badge reads
 `follow-up` from turn two onward.
 
-**Safety** — do **not** ask "delete all customers". The model correctly
+**Safety** - do **not** ask "delete all customers". The model correctly
 refuses to write one, so nothing is blocked and it looks like nothing
 happened. Use the adversarial suite instead:
 
@@ -86,18 +86,18 @@ cd backend && .venv/Scripts/python -m pytest tests/test_adversarial.py -q
 
 | Question | Why |
 |---|---|
-| *Which products have never been ordered?* | Correct SQL, but every product has been ordered — returns 0 rows and looks broken |
+| *Which products have never been ordered?* | Correct SQL, but every product has been ordered - returns 0 rows and looks broken |
 | *Delete all customers* | The model won't generate a write, so the gate never fires |
-| Anything with "best" or "top" and no measure | Answers with an assumption rather than asking — fine, but not the demo you want |
+| Anything with "best" or "top" and no measure | Answers with an assumption rather than asking - fine, but not the demo you want |
 
 ---
 
 ## If a question comes back wrong
 
-It happens — output varies between runs even at temperature 0, because query
+It happens - output varies between runs even at temperature 0, because query
 history feeds new few-shot examples into the prompt each time.
 
-**Turn it into the feature it is.** Click **"This SQL is wrong — fix it"**,
+**Turn it into the feature it is.** Click **"This SQL is wrong - fix it"**,
 correct the SQL, save. Then re-ask the question: the correction is retrieved as
 an example, ranked above anything that merely succeeded, and the provenance
 panel shows it was used. That is F22, and it demos better from a real failure

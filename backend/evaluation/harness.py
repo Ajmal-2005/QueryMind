@@ -1,7 +1,7 @@
 """Standing up a live, indexed connection for the harness to measure against.
 
-The evaluation runs the *production* pipeline — same retrieval, same gates,
-same execution — because a harness that reimplements any of that measures the
+The evaluation runs the *production* pipeline - same retrieval, same gates,
+same execution - because a harness that reimplements any of that measures the
 reimplementation. So it needs a real application database with a real indexed
 connection, which is what this module builds.
 

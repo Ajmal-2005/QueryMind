@@ -10,8 +10,8 @@ The rules are ordered most-specific first and the first match wins. Every
 decision carries the sentence that produced it, so the UI can say *why* it
 drew a line chart rather than leaving the user to guess.
 
-Anything the rules decline falls through to a table. A table is never wrong —
-it is only ever less illuminating than a chart would have been — so it is the
+Anything the rules decline falls through to a table. A table is never wrong -
+it is only ever less illuminating than a chart would have been - so it is the
 right floor for a system that must not present data misleadingly.
 """
 
@@ -53,7 +53,7 @@ class ChartSpec:
     """Column whose values split the data into separate lines or bar groups."""
 
     alternatives: list[ChartType] = field(default_factory=list)
-    """Other types that make sense for this shape — the override menu (F12)."""
+    """Other types that make sense for this shape - the override menu (F12)."""
 
     @property
     def is_chart(self) -> bool:
@@ -83,7 +83,7 @@ def recommend(profile: ResultProfile) -> ChartSpec:
     if profile.row_count == 1 and len(numeric) == 1 and profile.column_count <= 2:
         return ChartSpec(
             type=ChartType.KPI,
-            reason="one row with a single number — this is a headline figure",
+            reason="one row with a single number - this is a headline figure",
             y=[numeric[0].name],
             # The label column, when the query returned one alongside the value.
             x=next((c.name for c in categorical), None),
@@ -94,7 +94,7 @@ def recommend(profile: ResultProfile) -> ChartSpec:
     if temporal and numeric:
         period = temporal[0]
         if period.distinct_count < 2:
-            return _table("every row falls in the same period — nothing to plot")
+            return _table("every row falls in the same period - nothing to plot")
 
         return ChartSpec(
             type=ChartType.LINE,
@@ -102,7 +102,7 @@ def recommend(profile: ResultProfile) -> ChartSpec:
                 f"{period.name} is a date and there "
                 f"{'is' if len(numeric) == 1 else 'are'} {len(numeric)} numeric "
                 f"column{'' if len(numeric) == 1 else 's'} "
-                "— a series over time reads as a line"
+                "- a series over time reads as a line"
             ),
             x=period.name,
             y=_numeric_names(profile),
@@ -117,7 +117,7 @@ def recommend(profile: ResultProfile) -> ChartSpec:
         label = categorical[0]
         if label.distinct_count > MAX_BARS:
             return _table(
-                f"{label.name} has {label.distinct_count} distinct values — "
+                f"{label.name} has {label.distinct_count} distinct values - "
                 f"more than the {MAX_BARS} a bar chart can label legibly"
             )
 
@@ -147,12 +147,12 @@ def recommend(profile: ResultProfile) -> ChartSpec:
     if len(numeric) >= 2 and not categorical and not temporal:
         if profile.row_count > MAX_SCATTER_POINTS:
             return _table(
-                f"{profile.row_count:,} rows — too many points to read as a scatter"
+                f"{profile.row_count:,} rows - too many points to read as a scatter"
             )
         return ChartSpec(
             type=ChartType.SCATTER,
             reason=(
-                f"two numeric columns and nothing to group by — "
+                f"two numeric columns and nothing to group by - "
                 f"{numeric[0].name} against {numeric[1].name}"
             ),
             x=numeric[0].name,
@@ -161,7 +161,7 @@ def recommend(profile: ResultProfile) -> ChartSpec:
         )
 
     if not numeric:
-        return _table("no numeric column — there is nothing to measure")
+        return _table("no numeric column - there is nothing to measure")
 
     return _table("the shape of this result does not match any chart rule")
 

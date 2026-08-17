@@ -14,7 +14,7 @@ from app.core.config import settings
 
 
 class DecryptionError(RuntimeError):
-    """Ciphertext could not be decrypted — wrong key, or tampering."""
+    """Ciphertext could not be decrypted - wrong key, or tampering."""
 
 
 def _derive_key() -> bytes:

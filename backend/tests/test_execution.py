@@ -1,6 +1,6 @@
 """Sandboxed execution against the real demo database.
 
-The read-only tests here are the *first* line of defence — independent of the
+The read-only tests here are the *first* line of defence - independent of the
 validation gates, which `test_adversarial.py` covers. They answer a different
 question: if a write somehow got past every gate, would the database still
 refuse it?
@@ -79,7 +79,7 @@ def test_the_database_itself_refuses_writes(demo_connection, sql: str) -> None:
     """Defence in depth: bypass the gates entirely and go straight to the DB.
 
     This is what makes a prompt-injection attack non-fatal rather than merely
-    unlikely — the connection has no write capability to abuse.
+    unlikely - the connection has no write capability to abuse.
     """
     result = execute(demo_connection, sql)
 
@@ -133,5 +133,5 @@ def test_explain_returns_a_plan(demo_connection) -> None:
 
 
 def test_explain_returns_none_for_bad_sql(demo_connection) -> None:
-    # Advisory only — a plan that cannot be fetched must not block a query.
+    # Advisory only - a plan that cannot be fetched must not block a query.
     assert explain(demo_connection, "SELECT FROM WHERE") is None

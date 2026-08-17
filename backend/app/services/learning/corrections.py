@@ -5,7 +5,7 @@ the most recent successes, with a note saying Phase 5 would select by
 similarity instead. This is that swap.
 
 Why it matters more than it sounds. Recency selects whatever happened last,
-which bears no relationship to the question being asked now — three examples
+which bears no relationship to the question being asked now - three examples
 about product inventory teach nothing about a revenue question, and they cost
 the same tokens as three good ones. Similarity selects the example that
 actually demonstrates the join, the filter or the date handling the current
@@ -33,7 +33,7 @@ log = get_logger(__name__)
 MAX_EXAMPLES = 3
 
 # Below this, an "example" is about something else entirely and is worse than
-# no example — it spends tokens and anchors the model on the wrong pattern.
+# no example - it spends tokens and anchors the model on the wrong pattern.
 MIN_SIMILARITY = 0.15
 
 # How far a correction's similarity is boosted over a plain success. Enough to
@@ -47,7 +47,7 @@ CANDIDATE_LIMIT = 200
 #
 # Embedding 200 questions into 1,536 dimensions and taking 200 cosines is pure
 # Python, and the cost grows with every question ever asked. Measured at ~100
-# rows of history it was tens of milliseconds — not yet a problem, but one
+# rows of history it was tens of milliseconds - not yet a problem, but one
 # whose slope is wrong. The pre-filter bounds it with set arithmetic first.
 EMBED_LIMIT = 40
 
@@ -85,7 +85,7 @@ class Example:
     sql: str
     score: float
     source: str
-    """'correction' or 'history' — surfaced so provenance stays visible."""
+    """'correction' or 'history' - surfaced so provenance stays visible."""
 
 
 def record_correction(
@@ -103,8 +103,8 @@ def record_correction(
     """Save SQL a user fixed by hand.
 
     `verified` must reflect whether the corrected SQL actually passed the
-    gates and ran. An unverified correction is stored — it is still evidence
-    for the Phase 6 error taxonomy — but never retrieved as an example.
+    gates and ran. An unverified correction is stored - it is still evidence
+    for the Phase 6 error taxonomy - but never retrieved as an example.
     """
     embedder = embedder or get_embedder()
 
@@ -168,7 +168,7 @@ def similar_examples(
             )
         )
 
-    # Successful history has no stored embedding — queries are not indexed —
+    # Successful history has no stored embedding - queries are not indexed -
     # so the questions are embedded here. One batch call, not one per row.
     rows = db.execute(
         select(Query.question, Query.final_sql)

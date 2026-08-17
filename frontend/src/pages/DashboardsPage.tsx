@@ -1,7 +1,7 @@
 /** Saved dashboards (F18).
  *
  *  One page, two states: the list, and one dashboard opened. Opening refreshes
- *  — nothing is precomputed, because a dashboard quietly showing last week's
+ *  - nothing is precomputed, because a dashboard quietly showing last week's
  *  numbers is worse than no dashboard at all.
  */
 
@@ -173,7 +173,7 @@ function DashboardDetailView({
     queryFn: () => getDashboard(id),
   })
 
-  // Fires on open, not on a button — the tiles are only worth showing fresh.
+  // Fires on open, not on a button - the tiles are only worth showing fresh.
   const {
     data: refresh,
     isFetching,

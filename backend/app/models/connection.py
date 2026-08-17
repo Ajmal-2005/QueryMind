@@ -37,7 +37,7 @@ class Connection(Base):
     """A registered target database.
 
     Credentials are stored Fernet-encrypted in ``encrypted_credentials`` and
-    are never returned to the client — see the connection service.
+    are never returned to the client - see the connection service.
     """
 
     __tablename__ = "connections"

@@ -8,7 +8,7 @@ import type { Analysis } from '@/api/types'
 import { Icon } from '@/components/icons'
 
 function num(value: number | null, digits = 2): string {
-  if (value === null || value === undefined) return '—'
+  if (value === null || value === undefined) return '-'
   return Number.isInteger(value)
     ? value.toLocaleString()
     : value.toLocaleString(undefined, { maximumFractionDigits: digits })
@@ -124,7 +124,7 @@ export function ProfilePanel({ analysis }: { analysis: Analysis }) {
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums">
                     {column.null_count
                       ? `${column.null_count} (${(column.null_fraction * 100).toFixed(0)}%)`
-                      : '—'}
+                      : '-'}
                   </td>
                   <td className="px-3 py-1.5 text-right font-mono tabular-nums">
                     {column.distinct_count.toLocaleString()}
@@ -134,11 +134,11 @@ export function ProfilePanel({ analysis }: { analysis: Analysis }) {
                       <td className="px-3 py-1.5 text-right font-mono text-[12px]">
                         {column.earliest}
                       </td>
-                      <td className="px-3 py-1.5 text-right text-outline">—</td>
+                      <td className="px-3 py-1.5 text-right text-outline">-</td>
                       <td className="px-3 py-1.5 text-right font-mono text-[12px]">
                         {column.latest}
                       </td>
-                      <td className="px-3 py-1.5 text-right text-outline">—</td>
+                      <td className="px-3 py-1.5 text-right text-outline">-</td>
                     </>
                   ) : (
                     <>
@@ -174,7 +174,7 @@ export function ProfilePanel({ analysis }: { analysis: Analysis }) {
                   <span className="font-mono text-on-surface">
                     {outlier.column} = {num(outlier.value)}
                   </span>{' '}
-                  in row {outlier.row_index + 1} —{' '}
+                  in row {outlier.row_index + 1} -{' '}
                   {outlier.methods.length === 2
                     ? 'flagged by both the IQR and z-score tests'
                     : `flagged by ${outlier.methods[0] === 'iqr' ? 'the IQR rule' : 'the z-score'} only`}

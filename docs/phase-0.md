@@ -1,6 +1,6 @@
-# Phase 0 — Foundation
+# Phase 0 - Foundation
 
-Proposal weeks 1–2. Deliverable: *"a running skeleton, health-check endpoint
+Proposal weeks 1-2. Deliverable: *"a running skeleton, health-check endpoint
 green, benchmark data loaded."*
 
 ---
@@ -13,7 +13,7 @@ format check, backend tests, frontend lint, and frontend build.
 
 **Backend.** FastAPI on SQLAlchemy 2.0. Settings via `pydantic-settings` with
 a development default for every value, so the app boots with no configuration.
-Structured logging through `structlog` — console output in development, JSON
+Structured logging through `structlog` - console output in development, JSON
 elsewhere.
 
 **Data layer.** Models for `users`, `connections`, `queries`, and `audit_log`
@@ -91,7 +91,7 @@ numbers would be wrong in the system's favour on some dialects and against it
 on others.
 
 **Recovery rate is measured over queries that needed correction**, not over
-all queries — otherwise adding easy questions to the benchmark would inflate
+all queries - otherwise adding easy questions to the benchmark would inflate
 the number.
 
 **Python 3.10 compatibility.** The proposal specifies 3.11+; only 3.10.9 is
@@ -102,7 +102,7 @@ and the Docker image pins 3.11.
 
 ## Milestone gate
 
-> Week 2 — Infrastructure complete — *CI green, services healthy.*
+> Week 2 - Infrastructure complete - *CI green, services healthy.*
 
 CI is written and every check it runs passes locally. Services are healthy on
 the SQLite/no-Docker path. The gate is **met with one exception**: "services

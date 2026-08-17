@@ -1,7 +1,7 @@
 """Schema-aware starter questions (F23).
 
-The Ask page shipped with four hardcoded starters — "Top 5 products by price"
-— which are right for the demo database and wrong for every other one. Point
+The Ask page shipped with four hardcoded starters - "Top 5 products by price"
+- which are right for the demo database and wrong for every other one. Point
 this at a schema of insurance claims and it offers to rank products that do
 not exist.
 
@@ -11,7 +11,7 @@ Rule-based, because a wrong suggestion is one click from being ignored and an
 LLM call per connection-open is not.
 
 The questions are deliberately answerable. There is no value in suggesting
-something the schema cannot support — a starter that fails is worse than no
+something the schema cannot support - a starter that fails is worse than no
 starter, because the user reasonably concludes the whole product is broken.
 """
 
@@ -56,7 +56,7 @@ DATE_TYPES = ("date", "time", "timestamp")
 class Suggestion:
     question: str
     reason: str
-    """Which part of the schema produced it — kept so the UI can explain."""
+    """Which part of the schema produced it - kept so the UI can explain."""
 
 
 def _is_numeric(column: SchemaColumn) -> bool:
@@ -130,7 +130,7 @@ def suggest(
     if not tables:
         return []
 
-    # Biggest table first — row estimates are the cheapest available proxy for
+    # Biggest table first - row estimates are the cheapest available proxy for
     # "which of these is the fact table anyone cares about".
     tables.sort(key=lambda t: t.row_estimate or 0, reverse=True)
     suggestions: list[Suggestion] = []

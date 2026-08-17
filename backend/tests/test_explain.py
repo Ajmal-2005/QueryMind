@@ -1,7 +1,7 @@
 """Query explanation (F21).
 
 The value of this feature is that it reads the *parsed statement*, so it
-cannot drift from what will actually run — unlike the model's own prose
+cannot drift from what will actually run - unlike the model's own prose
 explanation, which describes what the model meant.
 """
 
@@ -25,7 +25,7 @@ def _clauses(sql: str) -> list[str]:
 
 
 def test_steps_are_in_evaluation_order_not_written_order() -> None:
-    """FROM before SELECT — the order that makes a query make sense."""
+    """FROM before SELECT - the order that makes a query make sense."""
     assert _clauses(FULL) == [
         "FROM",
         "JOIN",

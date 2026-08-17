@@ -37,7 +37,7 @@ def _recent_questions(db: Session, session_id: str | None, user_id: str) -> list
 def _few_shot_examples(db: Session, connection_id: str) -> list[tuple[str, str]]:
     """Past queries to use as in-context examples.
 
-    Only queries that actually executed qualify — a syntactically valid one
+    Only queries that actually executed qualify - a syntactically valid one
     that failed at runtime would teach the model the wrong thing.
 
     Phase 5 selects these by embedding similarity to the current question;

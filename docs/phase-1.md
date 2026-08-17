@@ -1,6 +1,6 @@
-# Phase 1 — Connection & Schema Layer
+# Phase 1 - Connection & Schema Layer
 
-Proposal weeks 3–4. Deliverable: *"connect to any Postgres/MySQL instance and
+Proposal weeks 3-4. Deliverable: *"connect to any Postgres/MySQL instance and
 produce a complete, searchable schema index."*
 
 ---
@@ -30,13 +30,13 @@ gets embedded, so it decides whether retrieval can find anything.
 vectorizer otherwise.
 
 **Foreign-key graph.** Undirected adjacency with one-hop expansion and
-shortest join paths — the structure Phase 2's retrieval expands against.
+shortest join paths - the structure Phase 2's retrieval expands against.
 
 **API.** `POST /connections`, `GET /connections`, `GET /connections/{id}`,
 `POST /{id}/test`, `POST /{id}/index`, `GET /{id}/schema`, `DELETE /{id}`.
 
 **Frontend.** A connections page: add a connection, test it, index it, and
-browse the result — tables, columns, keys, join targets, sample values, and
+browse the result - tables, columns, keys, join targets, sample values, and
 the indexed description itself.
 
 **Demo database.** `scripts/seed_demo_db.py` builds an 8-table e-commerce
@@ -64,9 +64,9 @@ low-cardinality `status` column.
 ## Not verified
 
 - **Postgres and MySQL targets.** All introspection ran against SQLite.
-  The code path is shared, but dialect-specific parts — `pg_class.reltuples`,
+  The code path is shared, but dialect-specific parts - `pg_class.reltuples`,
   `information_schema.TABLES`, the `default_transaction_read_only` connect
-  option — have never executed.
+  option - have never executed.
 - **pgvector.** Embeddings are stored as JSON; the `Vector(1536)` variant has
   never been exercised.
 - **OpenAI embeddings.** No API key configured, so only the local embedder
@@ -81,7 +81,7 @@ low-cardinality `status` column.
 **SQLite added as a target dialect.** The proposal scopes targets to Postgres
 and MySQL. Introspection runs through SQLAlchemy's dialect-agnostic
 `Inspector`, so supporting SQLite cost nothing and bought a target database
-that needs no server — which is what made Phase 1 demonstrable and testable
+that needs no server - which is what made Phase 1 demonstrable and testable
 without Docker. It is development and demo scope, not a claimed deliverable.
 
 **Descriptions are templates, not LLM-written.** Indexing a 400-table schema
@@ -90,8 +90,8 @@ description makes retrieval evaluation irreproducible. The template expands
 abbreviations (`cust_ref_id_v2` → "customer reference identifier v2") so the
 embedding sees the words a user would actually type.
 
-**A local hashing embedder as fallback.** It captures lexical overlap only —
-it will not match "revenue" to "sales" — so it is honest development
+**A local hashing embedder as fallback.** It captures lexical overlap only -
+it will not match "revenue" to "sales" - so it is honest development
 infrastructure, not a substitute for real embeddings. Every benchmark result
 must record which provider produced it. The `IndexResult` carries the
 embedder name for exactly this reason.
@@ -126,7 +126,7 @@ exists.
 ## Bug found during verification
 
 The connection form sent `port: 0` for file-backed databases, but the API
-validates port as 1–65535 when present. Saving a SQLite connection failed
+validates port as 1-65535 when present. Saving a SQLite connection failed
 with a 422. Fixed by omitting the port entirely for file databases, and
 pinned with two tests: one that a SQLite connection needs no port, and one
 that port 0 is rejected.
@@ -139,7 +139,7 @@ mismatch.
 
 ## Milestone gate
 
-> Week 4 — Schema indexing working — *200-table DB indexed in < 30 s.*
+> Week 4 - Schema indexing working - *200-table DB indexed in < 30 s.*
 
 Indexing works end to end and is fast at demo scale (8 tables, 65 ms), but
 the gate as written is **not demonstrated**: there is no 200-table database
@@ -153,5 +153,5 @@ here to index, and no Postgres to index it from.
 2. Confirm the pgvector variant creates a real `vector` column.
 3. Index a large schema to test the milestone claim honestly.
 4. Set `OPENAI_API_KEY` and compare retrieval quality against the local
-   embedder — Phase 2's schema-linking recall target of 95% is the number
+   embedder - Phase 2's schema-linking recall target of 95% is the number
    that decides whether the local fallback is viable for evaluation.

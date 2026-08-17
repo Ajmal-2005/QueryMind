@@ -141,7 +141,7 @@ def test_another_user_cannot_read_your_connection(
     other = _register(client)
     response = client.get(f"/api/v1/connections/{connection_id}", headers=other)
 
-    # 404, not 403 — a 403 would confirm the id exists.
+    # 404, not 403 - a 403 would confirm the id exists.
     assert response.status_code == 404
 
 

@@ -8,7 +8,7 @@ interface IconProps {
   name: string
   /** Pixel size. Material Symbols are sized by font-size, not width/height. */
   size?: number
-  /** Use the filled variant — the design fills icons on active nav items. */
+  /** Use the filled variant - the design fills icons on active nav items. */
   fill?: boolean
   weight?: number
   className?: string

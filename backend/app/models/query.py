@@ -46,7 +46,7 @@ class Query(Base):
 
     Stored so a chain of follow-ups accumulates: turn three resolves against
     turn two's *resolved* text, not the ellipsis the user typed. Reading back
-    `question` instead — which is what this did originally — silently dropped
+    `question` instead - which is what this did originally - silently dropped
     everything before the previous turn."""
     generated_sql: Mapped[str | None] = mapped_column(Text, nullable=True)
     final_sql: Mapped[str | None] = mapped_column(Text, nullable=True)

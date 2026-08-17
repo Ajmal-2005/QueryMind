@@ -1,7 +1,7 @@
 /** One-glance system status for the app header.
  *
  *  Deliberately says one thing. An earlier version listed every service and
- *  its state — "database healthy · redis off" — which is telemetry, not
+ *  its state - "database healthy · redis off" - which is telemetry, not
  *  product: it asks the user to interpret infrastructure they did not
  *  configure and cannot act on. The detail still exists, on the Settings
  *  page, where someone looking for it will go.
@@ -35,7 +35,7 @@ export function HealthBadge() {
   }
 
   const healthy = data.status === 'ok'
-  // Only services that are actually configured can be degraded — an unset
+  // Only services that are actually configured can be degraded - an unset
   // Redis is a deployment choice, not a fault, and must not show as one.
   const troubled = Object.entries(data.services)
     .filter(([, s]) => s.status === 'degraded' || s.status === 'unavailable')

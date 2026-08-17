@@ -7,7 +7,7 @@ against the schema, and one that is unsafe must never be costed.
 The distinction that matters is *retryable* versus *hard reject*. A
 hallucinated column is a mistake the model can fix from the error message, so
 it goes back round the loop. An attempt to DROP a table is not a mistake to
-be repaired — it is rejected outright and never regenerated.
+be repaired - it is rejected outright and never regenerated.
 """
 
 import enum
@@ -86,7 +86,7 @@ class ValidationFailure:
 class ValidationResult:
     ok: bool
     sql: str
-    """The SQL to execute — may differ from the input when the cost gate
+    """The SQL to execute - may differ from the input when the cost gate
     added a LIMIT."""
 
     failure: ValidationFailure | None = None
@@ -199,7 +199,7 @@ def _check_safety(statement: exp.Expression, raw_sql: str) -> str | None:
 
     if COMMENT_RE.search(raw_sql):
         return (
-            "SQL comments are not permitted — they are the standard way to "
+            "SQL comments are not permitted - they are the standard way to "
             "terminate an injected statement."
         )
 
@@ -238,7 +238,7 @@ def _result_aliases(statement: exp.Expression) -> set[str]:
     """Names introduced by `AS` in the SELECT list.
 
     `SELECT COUNT(*) AS n ... ORDER BY n` is valid SQL and an extremely
-    common shape — almost every "top N by revenue" question produces it.
+    common shape - almost every "top N by revenue" question produces it.
     Without this the schema gate rejects the alias as a nonexistent column.
     """
     return {
@@ -277,7 +277,7 @@ def _check_schema(
 
         if qualifier:
             # A qualifier that resolves to a CTE cannot be checked against the
-            # real schema — the CTE's output columns are computed.
+            # real schema - the CTE's output columns are computed.
             if qualifier in ctes:
                 continue
             real = aliases.get(qualifier)
@@ -397,7 +397,7 @@ def validate(
 
     statement = statements[0]
 
-    # --- gate 3: safety (before schema — an unsafe query is rejected even if
+    # --- gate 3: safety (before schema - an unsafe query is rejected even if
     # its identifiers happen to be wrong) ---
     reason = _check_safety(statement, stripped)
     if reason:

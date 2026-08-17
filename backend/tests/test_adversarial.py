@@ -1,4 +1,4 @@
-"""Adversarial suite — the proposal's hard requirement.
+"""Adversarial suite - the proposal's hard requirement.
 
 *Zero successful write operations across the adversarial test suite.*
 
@@ -193,7 +193,7 @@ def test_legitimate_queries_are_not_blocked(sql: str) -> None:
     # suite matters as much as the half above.
     result = validate(sql, Dialect.SQLITE, INDEX)
     assert result.ok, (
-        f"FALSE POSITIVE: {sql} — {result.failure and result.failure.message}"
+        f"FALSE POSITIVE: {sql} - {result.failure and result.failure.message}"
     )
 
 
@@ -201,7 +201,7 @@ def test_no_write_statement_is_ever_retryable() -> None:
     """The loop invariant, asserted over the whole corpus.
 
     If any of these came back retryable, the correction loop would feed it
-    to the model again — turning one blocked write into three attempts.
+    to the model again - turning one blocked write into three attempts.
     """
     for sql in WRITE_STATEMENTS + PIGGYBACKED + SYSTEM_CATALOGS + DANGEROUS_FUNCTIONS:
         result = validate(sql, Dialect.POSTGRES, INDEX)

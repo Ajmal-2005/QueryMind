@@ -5,8 +5,8 @@ wrong join, wrong aggregation, wrong filter, wrong ordering, ambiguous,
 unanswerable. A single accuracy number says how often the system is wrong; the
 taxonomy says *how*, which is the part that tells you what to fix.
 
-Classification is structural — it compares the predicted statement against the
-gold one clause by clause — and it is ordered, because a query that used the
+Classification is structural - it compares the predicted statement against the
+gold one clause by clause - and it is ordered, because a query that used the
 wrong table also has the wrong columns, and reporting that as a column error
 would send you looking in the wrong place. The first category that matches
 wins, and they are ordered from most to least fundamental.
@@ -39,7 +39,7 @@ CATEGORIES = (
 )
 
 DESCRIPTIONS = {
-    "not_generated": "No SQL was produced — the provider failed or declined.",
+    "not_generated": "No SQL was produced - the provider failed or declined.",
     "rejected_unsafe": "A safety gate refused the query outright.",
     "invalid_sql": "The SQL did not parse or referenced unknown identifiers.",
     "execution_failed": "The SQL was valid but the database refused to run it.",
@@ -109,7 +109,7 @@ def _shape(sql: str, dialect: str = "sqlite") -> _Shape | None:
 def classify(record) -> str | None:
     """Name the way a failed prediction differs from the gold query.
 
-    Returns None when the prediction was correct — there is nothing to
+    Returns None when the prediction was correct - there is nothing to
     classify about a right answer.
     """
     if record.correct:

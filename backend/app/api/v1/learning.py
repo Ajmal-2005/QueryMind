@@ -2,7 +2,7 @@
 
 Both feed the prompt, and both are user-authored, so both are validated before
 they can ever reach a model. A correction is stored only after its SQL has
-passed the same four gates and executed — an unverified correction taught as
+passed the same four gates and executed - an unverified correction taught as
 an example would propagate a mistake instead of fixing one.
 """
 
@@ -56,9 +56,9 @@ def create_correction(
     """Record a correction so future questions like this one go better (F22).
 
     The corrected SQL must pass the gates *and* execute before it is stored as
-    verified. A correction is the highest-signal example this system has — it
+    verified. A correction is the highest-signal example this system has - it
     is a place the model got something wrong and a human said what right looks
-    like — which is exactly why it must not be taken on trust.
+    like - which is exactly why it must not be taken on trust.
     """
     connection = _owned_connection(payload.connection_id, db, user)
 
@@ -205,7 +205,7 @@ def upsert_term(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=(
-                    "A glossary expression must be a plain SQL fragment — no "
+                    "A glossary expression must be a plain SQL fragment - no "
                     "statements, semicolons, or comments."
                 ),
             )

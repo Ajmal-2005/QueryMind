@@ -1,7 +1,7 @@
 """Narrative insight generation (F13).
 
-The model is given the *profile* — counts, ranges, quartiles, the trend, the
-flagged outliers — and only a small masked sample of rows. Two reasons, in
+The model is given the *profile* - counts, ranges, quartiles, the trend, the
+flagged outliers - and only a small masked sample of rows. Two reasons, in
 order of importance:
 
 1. The statistics are computed here, exactly, from the whole result. A model
@@ -14,7 +14,7 @@ order of importance:
 Three narrators mirror the SQL layer's three clients, with one difference
 that matters: the offline fallback here is not a stub. Statistical narration
 is a template problem, so `TemplateNarrator` writes a real, accurate summary
-from the profile with no API key at all — it is labelled `template` so no
+from the profile with no API key at all - it is labelled `template` so no
 report can mistake it for model output, but the product's promise that every
 query comes back with a written summary holds offline.
 """
@@ -49,7 +49,7 @@ NARRATIVE_SCHEMA: dict = {
     "properties": {
         "headline": {
             "type": "string",
-            "description": "One short sentence — the single most important "
+            "description": "One short sentence - the single most important "
             "thing this result shows. No preamble.",
         },
         "summary": {
@@ -73,19 +73,19 @@ business readers.
 
 You are given exact statistics computed from the complete result set, plus a \
 small sample of rows for context. The sample has had personal data replaced \
-with tokens like <email> — never comment on those tokens or speculate about \
+with tokens like <email> - never comment on those tokens or speculate about \
 what they contained.
 
 Rules:
 
 1. Every number you state must come from the statistics given to you. Do not \
-compute new figures from the sample rows — the sample is partial and any \
+compute new figures from the sample rows - the sample is partial and any \
 total you derive from it will be wrong.
 2. Describe what the data shows. Do not recommend actions, do not speculate \
 about causes, and do not invent business context you were not given.
 3. If a trend or outliers are reported, say so plainly and quantitatively. If \
 they are not, do not imply movement the data does not show.
-4. No preamble. Do not open with "This query returns" or "The data shows" — \
+4. No preamble. Do not open with "This query returns" or "The data shows" - \
 start with the finding itself.
 5. Say when the result is limited: an empty result, a single row, or a \
 truncated one is worth stating rather than dressing up."""
@@ -124,7 +124,7 @@ class Narrator(Protocol):
 
 def _format_number(value: float | None) -> str:
     if value is None:
-        return "—"
+        return "-"
     if value == int(value) and abs(value) < 1e15:
         return f"{int(value):,}"
     return f"{value:,.2f}"
@@ -133,8 +133,8 @@ def _format_number(value: float | None) -> str:
 def describe_profile(analysis: Analysis) -> str:
     """Render the computed statistics as the model's factual ground truth.
 
-    The profile carries *values* as well as counts — the most common entries
-    in a categorical column, the range of a temporal one — and those are row
+    The profile carries *values* as well as counts - the most common entries
+    in a categorical column, the range of a temporal one - and those are row
     data every bit as much as the sample is. They go through the same masking
     on the way out; masking only the sample rows would have leaked exactly the
     columns the masking exists to protect.
@@ -142,7 +142,7 @@ def describe_profile(analysis: Analysis) -> str:
     profile = analysis.profile
     lines = [
         f"Rows: {profile.row_count:,}"
-        + (" (capped — more rows exist)" if profile.truncated else ""),
+        + (" (capped - more rows exist)" if profile.truncated else ""),
         f"Columns: {profile.column_count}",
         "",
         "Column statistics:",
@@ -233,7 +233,7 @@ def build_prompt(
         note = (
             f"Sample of {len(sample)} row(s)"
             + (
-                f" — personal data in {', '.join(masking.column_names)} "
+                f" - personal data in {', '.join(masking.column_names)} "
                 "has been replaced with tokens"
                 if masking.any_masked
                 else ""
@@ -274,7 +274,7 @@ class AnthropicNarrator:
                 output_config={
                     "format": {"type": "json_schema", "schema": NARRATIVE_SCHEMA},
                     # Summarising supplied statistics is a describing task, not
-                    # a reasoning one — unlike SQL generation, which asks for
+                    # a reasoning one - unlike SQL generation, which asks for
                     # `high`. Low effort keeps this call cheap and quick.
                     "effort": "low",
                 },
@@ -314,7 +314,7 @@ class AnthropicNarrator:
 class TemplateNarrator:
     """Deterministic summary computed from the profile.
 
-    Not a stub in the sense the SQL layer's is — that one cannot answer the
+    Not a stub in the sense the SQL layer's is - that one cannot answer the
     question and says so. This one produces a genuinely correct summary; it
     is only less fluent than a model's, and never draws a conclusion the
     arithmetic does not already contain.
@@ -333,7 +333,7 @@ class TemplateNarrator:
                 headline="The query ran and matched nothing.",
                 summary=(
                     "No rows satisfied the conditions in this query. That is a "
-                    "valid answer — it may mean the filters are narrower than "
+                    "valid answer - it may mean the filters are narrower than "
                     "intended, or that there genuinely is no matching data."
                 ),
                 model=self.name,
@@ -388,7 +388,7 @@ class TemplateNarrator:
 
         if profile.truncated:
             findings.append(
-                f"The result was capped at {profile.row_count:,} rows — more exist, "
+                f"The result was capped at {profile.row_count:,} rows - more exist, "
                 "so these figures describe the capped set only."
             )
 

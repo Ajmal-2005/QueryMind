@@ -102,7 +102,7 @@ def test_get_client_falls_back_to_the_stub_without_a_key() -> None:
 
 
 def test_failover_moves_to_the_next_provider_on_failure() -> None:
-    """A valid key with no quota returns 429 — indistinguishable from an
+    """A valid key with no quota returns 429 - indistinguishable from an
     outage at the call site, and equally fatal to a demo."""
     from app.services.generation.llm import FailoverClient, LLMError
 
@@ -133,7 +133,7 @@ def test_falling_through_to_the_stub_says_why() -> None:
     assumption = " ".join(generation.assumptions)
     assert "No language model could be reached" in assumption
     assert "not a real translation" in assumption
-    # Every provider's failure is quoted, not just the first — with a chain,
+    # Every provider's failure is quoted, not just the first - with a chain,
     # the first error is rarely the interesting one.
     assert "insufficient_quota" in assumption
 

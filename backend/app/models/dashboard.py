@@ -1,11 +1,11 @@
 """Saved dashboards (F18).
 
-Appendix C specifies `dashboards (id, user_id, name, layout jsonb)` — tiles
+Appendix C specifies `dashboards (id, user_id, name, layout jsonb)` - tiles
 inside a JSON blob. This splits tiles into their own table instead, for one
 reason: a tile holds SQL that gets executed on every refresh. Rows can be
 counted, indexed, cascaded, and audited individually; a blob cannot, and a
 malformed one would take the whole dashboard down with it. `layout` survives
-as JSON on the dashboard, holding only grid positions — which is the part
+as JSON on the dashboard, holding only grid positions - which is the part
 that genuinely is unstructured.
 
 Tiles store the SQL, not just the question. Re-asking the question on every
@@ -80,7 +80,7 @@ class DashboardTile(Base):
     question: Mapped[str | None] = mapped_column(Text, nullable=True)
     sql: Mapped[str] = mapped_column(Text)
     chart: Mapped[dict] = mapped_column(JSON, default=dict)
-    """The chart spec the user had on screen when pinning — type and axes.
+    """The chart spec the user had on screen when pinning - type and axes.
     Empty means "re-derive it", which is what a tile pinned from a table does."""
 
     position: Mapped[int] = mapped_column(Integer, default=0)

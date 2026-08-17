@@ -4,7 +4,7 @@ Phase 0 stood up the scaffolding with a stub predictor. Phase 6 wires the real
 pipeline in behind ``--predictor pipeline``, adds the error taxonomy, and adds
 the ablation study.
 
-    # schema-linking ablation — needs no API key, produces real numbers
+    # schema-linking ablation - needs no API key, produces real numbers
     python -m evaluation.runner --ablation --save
 
     # the full pipeline, end to end

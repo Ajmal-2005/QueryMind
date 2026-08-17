@@ -48,7 +48,7 @@ def upgrade() -> None:
             ["dashboard_id"], ["dashboards.id"], ondelete="CASCADE"
         ),
         # A deleted connection leaves the tile in place, reporting that its
-        # database is gone — quieter than a dashboard that loses tiles.
+        # database is gone - quieter than a dashboard that loses tiles.
         sa.ForeignKeyConstraint(
             ["connection_id"], ["connections.id"], ondelete="SET NULL"
         ),

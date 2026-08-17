@@ -1,12 +1,12 @@
-# Phase 6 — Hardening & Evaluation
+# Phase 6 - Hardening & Evaluation
 
-Weeks 14–15. The phase the proposal calls highest-risk, because it is where
+Weeks 14-15. The phase the proposal calls highest-risk, because it is where
 the numbers come from.
 
 **The headline, stated first because everything else depends on it: there is
 still no `ANTHROPIC_API_KEY`, so no accuracy figure has been produced. What
 this phase built is the machinery that produces them, plus the one measurement
-that does not need a model — and that measurement returned a result worth
+that does not need a model - and that measurement returned a result worth
 reporting.**
 
 ---
@@ -28,7 +28,7 @@ reporting.**
 ### The predictor slot is filled
 
 Phase 0 left a stub with a note. `--predictor pipeline` now calls the real
-`pipeline.run` — same retrieval, same four gates, same sandboxed execution —
+`pipeline.run` - same retrieval, same four gates, same sandboxed execution -
 so the harness measures the system rather than a reimplementation of it. The
 ablation knobs are threaded *through* `pipeline.run` for the same reason.
 
@@ -56,7 +56,7 @@ only ever applied to answers already known to be wrong.
 
 ---
 
-## Verified — with real numbers
+## Verified - with real numbers
 
 **547 backend tests pass**, ruff clean, frontend builds and lints clean.
 
@@ -110,13 +110,13 @@ valuable thing to add after an API key.
 | 5 | 8.6 req/s | 573 ms |
 | 20 | 8.5 req/s | 1861 ms |
 
-200/200 requests succeeded at 20-way concurrency — nothing deadlocks, and the
+200/200 requests succeeded at 20-way concurrency - nothing deadlocks, and the
 process-local cache lock and per-query engine creation hold up.
 
 But **throughput is flat at ~8.5 req/s while latency grows linearly with
 concurrency**, which is the signature of complete serialisation: the system
 processes the same total work per second no matter how many clients wait. The
-cause is structural and known — SQLite permits one writer, every answered
+cause is structural and known - SQLite permits one writer, every answered
 question writes a `queries` row and an `audit_log` row, and uvicorn is running
 a single worker. Postgres is the documented deployment target and would remove
 the write serialisation; it has never been run.
@@ -127,7 +127,7 @@ the above.
 ### Token, cost and RBAC
 
 - `GET /usage` reports queries, tokens, estimated cost and mean latency,
-  scoped to the caller — or to everyone, with a per-user breakdown, for an
+  scoped to the caller - or to everyone, with a per-user breakdown, for an
   admin. Rates travel with every response.
 - `GET /usage/audit` is the first endpoint in the project to use
   `require_roles`, which had existed unused since Phase 0. A non-admin gets
@@ -150,7 +150,7 @@ the above.
 5. **`--predictor pipeline` has only ever run against the stub**, which ignores
    the question. It exercises the plumbing end to end and produces a 0%-shaped
    baseline, which is correct and uninteresting.
-6. **Postgres, Redis, Docker, MySQL** — unchanged from every previous phase.
+6. **Postgres, Redis, Docker, MySQL** - unchanged from every previous phase.
 7. **No accessibility audit was run.** Keyboard navigation and contrast were
    considered while building, but nothing was tested with a screen reader or an
    automated checker, and I will not claim otherwise.
@@ -181,14 +181,14 @@ The first load test showed ~2.1 s per request against a pipeline reporting
 query history, wrote a lexical pre-filter, and left a comment in the source
 claiming a load test had measured it at ~2 s.
 
-That was wrong. Every endpoint — including `/health` — took exactly ~2028 ms,
+That was wrong. Every endpoint - including `/health` - took exactly ~2028 ms,
 which is not what a data-dependent cost looks like. The cause was the *client*:
 `localhost` resolved to `::1` first, the server listens on IPv4 only, and every
 request paid a connection timeout before falling back. Against `127.0.0.1` the
 same endpoint answers in 4 ms.
 
 Both the load-test default and the false comment are fixed. The pre-filter was
-kept — bounding a cost that grows with history is still right — but it is now
+kept - bounding a cost that grows with history is still right - but it is now
 described as what it is, an unbounded slope caught early, not a 2-second fix.
 
 The lesson is the one worth putting in the report: *a constant latency across
@@ -197,7 +197,7 @@ unrelated endpoints is a property of the measurement, not the system.*
 **2. `schema_linking_recall` was called with the wrong shape and order.**
 It takes two flat lists as `(retrieved, gold)`; it was being handed
 lists-of-lists in the opposite order. Caught immediately by the first ablation
-run, which crashed rather than quietly returning a wrong number — the better
+run, which crashed rather than quietly returning a wrong number - the better
 of the two failure modes.
 
 **3. Recall was being pooled across questions rather than averaged.**

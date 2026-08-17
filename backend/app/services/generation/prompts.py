@@ -1,7 +1,7 @@
 """Prompt construction for SQL generation.
 
-Renders the retrieved schema subgraph as DDL — models have seen far more
-`CREATE TABLE` than any prose schema format — and layers dialect rules,
+Renders the retrieved schema subgraph as DDL - models have seen far more
+`CREATE TABLE` than any prose schema format - and layers dialect rules,
 resolved time windows, and similar past examples on top.
 """
 
@@ -24,7 +24,7 @@ DIALECT_RULES: dict[Dialect, str] = {
 - Use DATE_TRUNC('month', col) for period grouping and INTERVAL arithmetic for
   relative dates.
 - String matching is case-sensitive; use ILIKE for case-insensitive matching.
-- Integer division truncates — cast to numeric before dividing to get a
+- Integer division truncates - cast to numeric before dividing to get a
   fraction.""",
     Dialect.MYSQL: """- Target MySQL 8.
 - Quote identifiers with backticks when they need it.
@@ -51,7 +51,7 @@ Rules, in order of priority:
    Never emit INSERT, UPDATE, DELETE, DROP, ALTER, CREATE, GRANT, TRUNCATE, or
    multiple statements separated by semicolons.
 2. Use only the tables and columns given in the schema below. Do not invent an
-   identifier because it seems like it ought to exist — if the schema cannot
+   identifier because it seems like it ought to exist - if the schema cannot
    answer the question, say so in `assumptions` and return your closest attempt.
 3. Join only along the foreign-key relationships stated in the schema.
 4. Prefer explicit JOIN ... ON over comma joins, and qualify every column with
@@ -76,7 +76,7 @@ class BuiltPrompt:
     def approx_tokens(self) -> int:
         """Rough size estimate for logging and cost budgeting.
 
-        Deliberately crude — the real count comes from the provider's usage
+        Deliberately crude - the real count comes from the provider's usage
         field; this only needs to be good enough to spot a prompt that has
         grown out of control.
         """
@@ -118,7 +118,7 @@ def render_schema(db: Session, connection_id: str, table_names: list[str]) -> st
             )
         )
     )
-    # Preserve retrieval order — the most relevant table should be read first.
+    # Preserve retrieval order - the most relevant table should be read first.
     order = {name: i for i, name in enumerate(table_names)}
     tables.sort(key=lambda t: order.get(t.table_name, len(order)))
 
@@ -189,7 +189,7 @@ def build(
 
     if intent.limit_hint:
         sections.append(
-            f"The question asks for {intent.limit_hint} rows — "
+            f"The question asks for {intent.limit_hint} rows - "
             f"use LIMIT {intent.limit_hint}."
         )
     elif intent.wants_ordering:

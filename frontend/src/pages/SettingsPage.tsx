@@ -1,8 +1,8 @@
 /** Account, appearance, usage and system status.
  *
  *  This page exists partly to give the infrastructure detail somewhere honest
- *  to live. It used to sit in the app header — "database healthy · redis off"
- *  — where it asked every user to interpret services they did not configure.
+ *  to live. It used to sit in the app header - "database healthy · redis off"
+ *  - where it asked every user to interpret services they did not configure.
  *  Here it is available to someone who went looking for it, which is the
  *  difference between diagnostics and noise.
  */
@@ -86,14 +86,14 @@ export function SettingsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Section title="Account">
-          <Row label="Email">{user?.email ?? '—'}</Row>
+          <Row label="Email">{user?.email ?? '-'}</Row>
           <Row label="Role">
-            <span className="capitalize">{user?.role ?? '—'}</span>
+            <span className="capitalize">{user?.role ?? '-'}</span>
           </Row>
           <Row label="Member since">
             {user?.created_at
               ? new Date(user.created_at).toLocaleDateString()
-              : '—'}
+              : '-'}
           </Row>
         </Section>
 

@@ -80,7 +80,7 @@ function ChartTooltip({ active, payload, label }: any) {
   )
 }
 
-/** Rows as objects keyed by column name — what Recharts consumes. */
+/** Rows as objects keyed by column name - what Recharts consumes. */
 function useChartData(result: ResultSet, spec: ChartSpec) {
   return useMemo(() => {
     const index = new Map(result.columns.map((name, i) => [name, i]))
@@ -143,7 +143,7 @@ export function ChartView({
     return (
       <div className="rounded-md border border-subtle bg-surface-bg px-6 py-8 text-center">
         <p className="font-mono text-[2.75rem] leading-none tabular-nums text-primary">
-          {typeof value === 'number' ? value.toLocaleString() : String(value ?? '—')}
+          {typeof value === 'number' ? value.toLocaleString() : String(value ?? '-')}
         </p>
         <p className="mt-2 text-label-md uppercase tracking-wider text-on-surface-variant">
           {label || column}
@@ -244,7 +244,7 @@ export function ChartView({
       {analysis?.outliers.total ? (
         <p className="mt-1 text-[11px] text-data-amber">
           {analysis.outliers.total} outlying{' '}
-          {analysis.outliers.total === 1 ? 'value' : 'values'} in this result — see
+          {analysis.outliers.total === 1 ? 'value' : 'values'} in this result - see
           the statistics panel.
         </p>
       ) : null}

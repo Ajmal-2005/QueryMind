@@ -70,7 +70,7 @@ def build_url(connection: Connection, credentials: Credentials) -> str:
         #
         # Opened read-only through a `mode=ro` URI. SQLite has no roles to
         # grant, so this is the equivalent of the SELECT-only database user
-        # the other dialects use — the driver itself refuses writes, whatever
+        # the other dialects use - the driver itself refuses writes, whatever
         # SQL reaches it.
         clean_path = connection.database.strip("\"'")
         path = quote(clean_path.replace("\\", "/"), safe="/:")

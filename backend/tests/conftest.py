@@ -20,7 +20,7 @@ os.environ.setdefault("SECRET_KEY", "test-secret-key")
 
 # Settings read `.env`, so a developer's real provider keys would otherwise
 # leak into the suite: tests would take a different path on their machine than
-# in CI, and — worse — would spend money making live API calls. Cleared before
+# in CI, and - worse - would spend money making live API calls. Cleared before
 # `app.core.config` is imported, so the keys are absent when Settings is built.
 for _key in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"):
     os.environ[_key] = ""

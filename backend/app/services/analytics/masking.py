@@ -1,7 +1,7 @@
 """PII masking for data leaving the deployment.
 
 The narrative feature (F13) is the first point in this system where actual
-row values — not schema names, not aggregates — are sent to a third-party
+row values - not schema names, not aggregates - are sent to a third-party
 API. The proposal puts PII handling in the security model, so this runs
 between the result set and the prompt, and there is no path to the narrator
 that skips it.
@@ -10,11 +10,11 @@ Two independent detectors, because either alone is insufficient:
 
 - **Column names.** A column called `email` is PII regardless of what its
   values happen to look like, and this catches the fields whose contents have
-  no distinctive format at all — `full_name`, `street_address`, `notes`.
+  no distinctive format at all - `full_name`, `street_address`, `notes`.
 - **Value patterns.** Catches PII sitting in a column nobody thought to name
   suspiciously: an email in `contact`, a card number in `reference`.
 
-Masking replaces a value with a type token — `<email>`, not `j***@x.com`.
+Masking replaces a value with a type token - `<email>`, not `j***@x.com`.
 Partial masking leaks the domain, the last four digits, the name length; and
 for the narrator's purpose, knowing the *shape* of the data is the entire
 requirement. It never needs the value.
@@ -171,7 +171,7 @@ def _luhn(digits: str) -> bool:
 def _plausible(kind: str, matched: str) -> bool:
     """Second check on a pattern hit.
 
-    The regexes are deliberately loose — a tight one misses real PII — so the
+    The regexes are deliberately loose - a tight one misses real PII - so the
     expensive-to-be-wrong cases get a cheap confirmation here. A false
     positive is not harmless: masking `order_reference` or `order_date` would
     hide the very columns the summary is about.
@@ -229,7 +229,7 @@ def mask_rows(
     by_name: dict[str, MaskedColumn] = {}
 
     # A column flagged by name is masked in full, including values that match
-    # no pattern — that is the entire point of the name rule.
+    # no pattern - that is the entire point of the name rule.
     name_flagged: dict[int, str] = {}
     for index, name in enumerate(columns):
         detected = classify_column(name)

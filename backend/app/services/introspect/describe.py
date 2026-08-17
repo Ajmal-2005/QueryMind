@@ -2,7 +2,7 @@
 
 The description is what gets embedded, so it decides whether schema linking
 finds the right table. It has to contain the words a user would actually
-type: "orders", "purchase", "customer", "revenue" — not just identifiers.
+type: "orders", "purchase", "customer", "revenue" - not just identifiers.
 
 Generation is deterministic and template-based rather than LLM-written. Two
 reasons: indexing a 400-table schema would otherwise cost 400 LLM calls, and

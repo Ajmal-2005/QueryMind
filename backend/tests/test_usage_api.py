@@ -26,7 +26,7 @@ def _headers_with_role(client: TestClient, engine, role) -> dict:
     it wants.
 
     The role is set through its own short-lived session rather than the `db`
-    fixture, which holds an open transaction for the whole test — committing
+    fixture, which holds an open transaction for the whole test - committing
     on it while the TestClient also writes deadlocks SQLite.
     """
     import uuid

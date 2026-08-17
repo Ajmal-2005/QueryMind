@@ -1,10 +1,10 @@
-# Phase 5 — Conversation & Learning
+# Phase 5 - Conversation & Learning
 
-Weeks 12–13. Features F19–F25.
+Weeks 12-13. Features F19-F25.
 
 The theme: everything here is about the system knowing things the schema does
 not. A conversation's earlier turns, a definition the organisation holds, a
-query a human fixed — none of that is in any `CREATE TABLE`, and all of it
+query a human fixed - none of that is in any `CREATE TABLE`, and all of it
 changes the answer.
 
 ---
@@ -21,7 +21,7 @@ changes the answer.
 | F24 Business glossary | `learning/glossary.py` | Term → definition → SQL fragment, injected into the prompt |
 | F25 Semantic caching | `cache/semantic.py` | Skips generation when an earlier question meant the same thing |
 
-### F19 — Multi-turn
+### F19 - Multi-turn
 
 Phase 2 detected pronouns and glued the two questions together with an em
 dash. Three changes:
@@ -30,7 +30,7 @@ dash. Three changes:
 back without containing a single pronoun. They were previously treated as new
 questions, which lost the subject entirely.
 
-**One instruction, not two sentences.** `"revenue last quarter — follow-up:
+**One instruction, not two sentences.** `"revenue last quarter - follow-up:
 break that down by region"` became `"revenue last quarter, grouped
 additionally by: region"`. The instruction words are then stripped from the
 tail, so the model is told what to do once rather than twice.
@@ -42,16 +42,16 @@ carries the time window from two turns back. Time windows and limit hints are
 read from the merged text for the same reason.
 
 *This was claimed here before it was true.* The original implementation read
-`Query.question` — the text as typed — so the third turn resolved against the
+`Query.question` - the text as typed - so the third turn resolved against the
 raw second turn and dropped the first. Found by running a three-turn chain
 against the live app in Phase 7 and reading the resolved text, not by any
 test. The column, and a test that fails without it, arrived then.
 
-### F20 — Targeted clarification
+### F20 - Targeted clarification
 
 The scope here is narrower than it first looks, deliberately. Phase 2 decided
 that a question missing a metric gets *answered* with the assumption stated,
-not refused — and that decision holds. F20 is about making the clarifications
+not refused - and that decision holds. F20 is about making the clarifications
 that already fire more useful, not about refusing more questions.
 
 So each clarification now names what is missing (`missing: ["metric", "time
@@ -59,21 +59,21 @@ period"]`) and carries `clarification_options`: two or three complete
 questions the user can send with one click, instead of a paragraph telling
 them to be more specific.
 
-### F21 — Query explanation
+### F21 - Query explanation
 
 Reads the **parsed statement**, not the model's prose. The generation already
-returns an `explanation`, but that is the model's account of its own work — it
+returns an `explanation`, but that is the model's account of its own work - it
 describes what the model *meant*, and where the SQL does something else the
 explanation follows the intention.
 
 Both are shown, side by side, labelled. Where they disagree, something is
 wrong and the reader can see it. That is the whole point of the feature.
 
-Steps are presented in **evaluation order** — FROM before SELECT — which is
+Steps are presented in **evaluation order** - FROM before SELECT - which is
 not the order the query is written in and is the order that makes it make
 sense.
 
-### F22 — Learning from corrections
+### F22 - Learning from corrections
 
 The swap Phase 2 left wired: `_few_shot_examples` picked the most recent
 successes with a note saying Phase 5 would select by similarity. It now does.
@@ -84,11 +84,11 @@ revenue question and cost the same tokens as three good ones.
 
 Corrections are ranked **above** plain successes (+0.15 similarity). A query a
 human fixed is a place the system got something wrong and was told what right
-looks like — the highest-signal data this application ever sees. Which is
+looks like - the highest-signal data this application ever sees. Which is
 exactly why a correction is only stored as `verified` after passing the four
 gates *and* executing.
 
-### F23 — Suggested questions
+### F23 - Suggested questions
 
 The Ask page shipped with four hardcoded starters. Point the product at an
 insurance schema and it offered to rank products that do not exist.
@@ -97,15 +97,15 @@ Now generated from the indexed schema: find the largest table, find its
 measures and dimensions, phrase the questions those support. Every suggestion
 carries the reason it was offered, shown on hover.
 
-### F24 — Business glossary
+### F24 - Business glossary
 
-Matching is deliberately **literal** — a term is used when its words appear in
+Matching is deliberately **literal** - a term is used when its words appear in
 the question. Embedding similarity was the obvious alternative and the wrong
 one: a definition silently applied because it was *nearly* relevant would
 change what a query means with no way for the user to see why the number
 moved. Applied terms are listed in the provenance panel.
 
-### F25 — Semantic caching
+### F25 - Semantic caching
 
 Phase 4's cache keys on SQL, so it only helps *after* the model has been
 called. This keys on the question and skips generation entirely.
@@ -113,16 +113,16 @@ called. This keys on the question and skips generation entirely.
 Three guards, because the failure mode is confidently answering a question
 nobody asked:
 
-1. **0.93 cosine** — against 0.15 for picking a few-shot example. A bad
+1. **0.93 cosine** - against 0.15 for picking a few-shot example. A bad
    example wastes tokens; a bad cache hit returns the wrong answer silently.
 2. **Polarity and number guards.** "revenue in the north" and "revenue *not*
    in the north" are near-identical in embedding space and are opposites. Any
-   disagreement on negation, comparison or superlative words — or on any
-   number in the question — blocks the hit whatever the score.
+   disagreement on negation, comparison or superlative words - or on any
+   number in the question - blocks the hit whatever the score.
 3. **Always visible.** A served hit reports the question it matched, the
    similarity, and the embedder, in the UI.
 
-If the cached SQL fails validation or execution — the schema may have moved —
+If the cached SQL fails validation or execution - the schema may have moved -
 the loop falls through to real generation rather than giving up.
 
 ---
@@ -135,7 +135,7 @@ lints clean.
 Exercised against the running app:
 
 - Suggestions come from the demo schema: "What is total amount by month?",
-  "Top 5 status by total amount" — no hardcoded starters remain.
+  "Top 5 status by total amount" - no hardcoded starters remain.
 - A glossary term (`active customer`) was defined and applied to a live query;
   the provenance panel lists it.
 - A correction was saved after passing the gates, then appeared as an example
@@ -158,7 +158,7 @@ Exercised against the running app:
 
 1. **No `ANTHROPIC_API_KEY`.** Still the largest gap. Everything here changes
    the *prompt*, and no prompt has ever reached a real model. Whether richer
-   examples and glossary terms actually improve accuracy is unmeasured — this
+   examples and glossary terms actually improve accuracy is unmeasured - this
    phase's contribution to research question 3 is a mechanism, not a result.
 2. **Semantic caching is mostly lexical.** The local hashing embedder matches
    on word overlap, so "revenue" will not match "sales" until a real embedding
@@ -167,7 +167,7 @@ Exercised against the running app:
    been served.**
 3. **The +0.15 correction bonus is a judgement, not a measured constant.** So
    is the 0.93 cache threshold and the 0.15 example floor.
-4. **Redis, Docker, Postgres, MySQL** — unchanged from earlier phases.
+4. **Redis, Docker, Postgres, MySQL** - unchanged from earlier phases.
 5. Follow-up resolution is rule-based and English-only. A follow-up phrased in
    a way the patterns miss degrades to a new question, which is the safe
    direction but is a real limit.
@@ -178,7 +178,7 @@ Exercised against the running app:
 
 | Decision | Why |
 |---|---|
-| **F20 does not make more questions ambiguous** | An earlier draft refused "top 5 products" for naming no measure. It broke two existing tests, and rightly — Phase 2 decided such questions get answered with the assumption stated. Refusing more would have been a regression dressed as a feature. |
+| **F20 does not make more questions ambiguous** | An earlier draft refused "top 5 products" for naming no measure. It broke two existing tests, and rightly - Phase 2 decided such questions get answered with the assumption stated. Refusing more would have been a regression dressed as a feature. |
 | **The explanation is parsed, not narrated** | The model's prose describes its intent; the parsed reading describes what will run. Showing both makes a divergence visible instead of hiding it behind one confident paragraph. |
 | **Corrections outrank successes** | A query a human fixed carries strictly more information than one that merely ran. |
 | **A correction must execute before it is stored** | An unverified correction taught as an example propagates a mistake into every future answer instead of fixing one. |
@@ -195,7 +195,7 @@ Exercised against the running app:
 
 **1. `order` as a noun read as a sort instruction.**
 "also show order counts" matched the sort refinement and was rewritten as
-"ordered by: show counts" — mangling a request for a column into a request for
+"ordered by: show counts" - mangling a request for a column into a request for
 an ordering. Every schema this product touches has an `orders` table. The rule
 now requires the word to be a verb (`sort by`, or sentence-initial) and runs
 last.
@@ -226,7 +226,7 @@ with an aggregate word.
 ## Milestone gate
 
 The proposal does not set a numeric gate for this phase. The functional
-target — F19–F25 built — is met, and every feature was exercised in the
+target - F19-F25 built - is met, and every feature was exercised in the
 running application.
 
 The honest qualification: this phase is entirely about *improving prompt
@@ -241,7 +241,7 @@ job and it needs an API key.
 Phase 6 is where the numbers come from and it is the highest-risk phase.
 
 1. **Set `ANTHROPIC_API_KEY`.** Now blocking three phases' worth of claims.
-2. Wire `pipeline.run` into the evaluation harness predictor slot — still the
+2. Wire `pipeline.run` into the evaluation harness predictor slot - still the
    placeholder stub.
 3. Download Spider, Spider-Realistic, BIRD.
 4. The ablation study now has more arms worth running than the proposal listed:

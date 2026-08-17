@@ -2,14 +2,14 @@
 
 CSV, JSON and Excel are pure serialisation of the result set. The PDF is a
 report: question, SQL, narrative, the chart the browser drew, statistics, and
-a sample of rows — the thing someone actually attaches to an email.
+a sample of rows - the thing someone actually attaches to an email.
 
 The chart arrives from the client as a PNG, because the chart is a Recharts
 SVG that only exists in the browser. Re-drawing it server-side would mean a
 second charting implementation whose output could silently disagree with what
 the user saw, which is worse than the coupling.
 
-PNG export of the chart alone never reaches this module — the browser
+PNG export of the chart alone never reaches this module - the browser
 serialises its own SVG to a canvas and saves it directly, with no round trip.
 """
 
@@ -85,7 +85,7 @@ def decode_chart_image(data_url: str | None) -> bytes | None:
     """Decode a client-supplied `data:image/png;base64,...` chart.
 
     Returns None on anything unexpected. A malformed image must not fail an
-    export the user is waiting on — the report is still complete without it.
+    export the user is waiting on - the report is still complete without it.
     """
     if not data_url:
         return None
@@ -152,7 +152,7 @@ def to_xlsx(
     for row in rows:
         sheet.append([_cell(v) for v in row])
 
-    # Freeze the header and turn on filters — what anyone does by hand on
+    # Freeze the header and turn on filters - what anyone does by hand on
     # opening a data export.
     sheet.freeze_panes = "A2"
     if rows:
@@ -182,16 +182,16 @@ def _statistics_table(analysis: Analysis) -> list[list[str]]:
 
     for column in analysis.profile.columns:
         if column.kind is ColumnKind.NUMERIC:
-            span = f"{column.minimum:,.2f} – {column.maximum:,.2f}"
+            span = f"{column.minimum:,.2f} - {column.maximum:,.2f}"
             centre = f"{column.mean:,.2f}"
         elif column.kind is ColumnKind.TEMPORAL:
-            span = f"{column.earliest} – {column.latest}"
-            centre = "—"
+            span = f"{column.earliest} - {column.latest}"
+            centre = "-"
         elif column.top_values:
-            span = "—"
+            span = "-"
             centre = f"{column.top_values[0].value} ({column.top_values[0].count})"
         else:
-            span = centre = "—"
+            span = centre = "-"
 
         body.append(
             [

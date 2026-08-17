@@ -140,7 +140,7 @@ def test_a_correction_runs_the_safety_gates(
 def test_a_saved_correction_shows_up_as_an_example(
     client: TestClient, auth_headers: dict, connection_id: str
 ) -> None:
-    """The whole point of F22 — the next similar question is influenced by it."""
+    """The whole point of F22 - the next similar question is influenced by it."""
     client.post(
         "/api/v1/learning/corrections",
         headers=auth_headers,

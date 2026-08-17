@@ -58,7 +58,7 @@ services:
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
   # A second Postgres holding a realistic e-commerce schema. This is the
-  # *target* database used for demos and the custom evaluation set — never
+  # *target* database used for demos and the custom evaluation set - never
   # the app's own storage.
   sample-db:
     image: postgres:16-alpine

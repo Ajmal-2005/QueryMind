@@ -6,7 +6,7 @@ nothing had ever exercised it. This version has two backends and the
 in-process one runs everywhere, so the caching *logic* is testable even where
 Redis is not.
 
-Redis is still the deployment target and is still unexercised — no Docker, no
+Redis is still the deployment target and is still unexercised - no Docker, no
 Redis, ever run here. The interface is small enough that swapping backends is
 a configuration change, and `backend_name` travels into the health endpoint
 and the API response so no measurement can misattribute a cache hit.
@@ -112,7 +112,7 @@ class MemoryCache:
 class RedisCache:
     """Shared cache for multi-worker deployments.
 
-    **Never exercised** — no Redis has run against this codebase. Every method
+    **Never exercised** - no Redis has run against this codebase. Every method
     degrades to a miss on failure rather than raising: a cache that is down
     must slow the system, not break it.
     """

@@ -42,7 +42,7 @@ class ExecutionResult:
 
     cached: bool = False
     """Served from the result cache. `duration_ms` is then the cache lookup,
-    not the query — reporting one as the other would flatter every benchmark."""
+    not the query - reporting one as the other would flatter every benchmark."""
 
     @property
     def is_empty(self) -> bool:
@@ -91,7 +91,7 @@ def _install_sqlite_timeout(conn, deadline: float) -> None:
 def _clear_sqlite_timeout(conn) -> None:
     raw = getattr(conn.connection, "dbapi_connection", None) or conn.connection
     # Nothing to clear if the driver never accepted a handler in the first
-    # place — the install path already logged that.
+    # place - the install path already logged that.
     with contextlib.suppress(AttributeError):
         raw.set_progress_handler(None, 0)
 
@@ -166,7 +166,7 @@ def _clean_error(exc: SQLAlchemyError) -> str:
     """Reduce a driver exception to the message worth feeding back.
 
     SQLAlchemy wraps the driver error in its own text plus the offending SQL
-    and a docs link. The database's own sentence — "no such column: foo" — is
+    and a docs link. The database's own sentence - "no such column: foo" - is
     the part the correction loop needs; the rest is noise that dilutes it.
     """
     original = getattr(exc, "orig", None)

@@ -1,6 +1,6 @@
 """Build the demo e-commerce target database.
 
-Produces a SQLite file the platform can connect to as a *target* database —
+Produces a SQLite file the platform can connect to as a *target* database -
 the thing a user would point it at. Deliberately mirrors the schema the
 custom evaluation set is written against, and includes the awkward parts of a
 real schema: a junction table, a self-referencing hierarchy, an abbreviated

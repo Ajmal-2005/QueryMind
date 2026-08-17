@@ -1,8 +1,8 @@
 """API contracts for the analytics stage.
 
 Deliberately mirrors the dataclasses rather than serialising them directly.
-The dataclasses carry things the wire does not need — column indexes,
-internal reasons — and coupling the response shape to an internal structure
+The dataclasses carry things the wire does not need - column indexes,
+internal reasons - and coupling the response shape to an internal structure
 means every refactor becomes a breaking API change.
 """
 
@@ -120,7 +120,7 @@ class AnalysisRead(BaseModel):
     outliers: OutliersRead
     trend: TrendRead | None = None
     trend_unavailable: str | None = None
-    """Why no trend was produced — shown instead of silently omitting it."""
+    """Why no trend was produced - shown instead of silently omitting it."""
 
     options: dict[str, list[str]] = {}
     """Columns available per axis type, for the manual chart override."""
@@ -184,8 +184,8 @@ class CacheStatusRead(BaseModel):
 
 # --------------------------------------------------------------- converters
 #
-# Three routers return an analysis — /query, /query/insight and dashboard
-# refresh — so the mapping lives once, here, next to the shapes it produces.
+# Three routers return an analysis - /query, /query/insight and dashboard
+# refresh - so the mapping lives once, here, next to the shapes it produces.
 
 
 def to_analysis_read(analysis: Any) -> AnalysisRead:

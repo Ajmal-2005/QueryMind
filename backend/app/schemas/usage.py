@@ -27,7 +27,7 @@ class ModelRate(BaseModel):
     """The price the figures above were computed with.
 
     Returned with every response so a cost can always be traced back to the
-    rate that produced it — prices change, and a number with no rate beside
+    rate that produced it - prices change, and a number with no rate beside
     it silently becomes wrong.
     """
 
@@ -39,7 +39,7 @@ class ModelRate(BaseModel):
 class UsageResponse(BaseModel):
     window_days: int
     scope: str
-    """'you' or 'all users' — which rows these totals cover."""
+    """'you' or 'all users' - which rows these totals cover."""
 
     totals: UsageTotals
     by_user: list[UsageByUser] = []

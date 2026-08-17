@@ -70,7 +70,7 @@ def test_schema_failures_are_retryable() -> None:
 
 def test_near_miss_gets_a_did_you_mean_hint() -> None:
     # The database's own errors carry these, and they turn out to be strong
-    # repair signals — the schema gate produces them in the same shape.
+    # repair signals - the schema gate produces them in the same shape.
     result = _v("SELECT id FROM custmers")
     assert "customers" in result.failure.message.lower()
 
@@ -94,7 +94,7 @@ def test_unknown_alias_is_caught() -> None:
 
 def test_cte_name_is_not_treated_as_a_missing_table() -> None:
     # A CTE looks exactly like a table reference but does not exist in the
-    # database — the gate has to know the difference.
+    # database - the gate has to know the difference.
     assert _v("WITH recent AS (SELECT id FROM orders) SELECT id FROM recent").ok
 
 
@@ -165,7 +165,7 @@ def test_referenced_tables_are_reported() -> None:
 
 def test_safety_is_checked_before_schema() -> None:
     # A DROP against a nonexistent table must be rejected as unsafe, not
-    # returned as a retryable schema error — otherwise the loop would retry it.
+    # returned as a retryable schema error - otherwise the loop would retry it.
     result = _v("DROP TABLE nonexistent_table")
     assert result.failure.gate is Gate.SAFETY
     assert not result.failure.retryable

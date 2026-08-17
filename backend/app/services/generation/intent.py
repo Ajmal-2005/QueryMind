@@ -6,7 +6,7 @@ region") against the conversation so far.
 
 Rule-based rather than an LLM call. The proposal budgets 300 ms for this
 stage; a round-trip cannot meet that, and the classification is only used to
-steer the prompt and the later chart choice — a wrong label degrades quality
+steer the prompt and the later chart choice - a wrong label degrades quality
 rather than breaking correctness.
 """
 
@@ -98,7 +98,7 @@ PATTERNS: list[tuple[QuestionType, tuple[str, ...]]] = [
     ),
 ]
 
-# Relative time windows the SQL generator should be told about explicitly —
+# Relative time windows the SQL generator should be told about explicitly -
 # left implicit, models pick inconsistent boundaries for "last quarter".
 TIME_WINDOWS: dict[str, str] = {
     r"\blast quarter\b": "the previous complete calendar quarter",
@@ -141,9 +141,9 @@ ELLIPTICAL_MARKERS = (
 )
 
 # What a follow-up is asking the previous question to do. Named so the
-# resolved question reads as an instruction rather than two glued sentences —
+# resolved question reads as an instruction rather than two glued sentences -
 # models handle "grouped additionally by region" far better than
-# "revenue last quarter — follow-up: break that down by region".
+# "revenue last quarter - follow-up: break that down by region".
 REFINEMENTS: tuple[tuple[str, str], ...] = (
     (
         r"\b(break(ing)? (it |that |them )?down|split|group)\b",
@@ -154,7 +154,7 @@ REFINEMENTS: tuple[tuple[str, str], ...] = (
     (r"\b(filter|only|just|restrict|limit to|where)\b", "restricted to"),
     # "sort"/"order"/"rank" only where they are *verbs*. `order` is a noun in
     # every schema this product touches, and "also show order counts" asks for
-    # a column, not a sort — which is why this rule is last and this narrow.
+    # a column, not a sort - which is why this rule is last and this narrow.
     (r"\b(sort|order|rank)(ed|ing)?\s+by\b|^\s*(sort|order|rank)\b", "ordered by"),
 )
 
@@ -194,7 +194,7 @@ class Intent:
     when the question was answerable."""
 
     missing: list[str] = field(default_factory=list)
-    """What the question did not specify — 'metric', 'time period'. Drives the
+    """What the question did not specify - 'metric', 'time period'. Drives the
     targeted clarification rather than one generic prompt."""
 
     @property
@@ -245,7 +245,7 @@ def _resolve_follow_up(original: str, normalized: str, previous: str) -> str:
     Phrased as a single instruction rather than two glued sentences. The
     instruction words are then removed from the tail, so "break that down by
     region" becomes "…, grouped additionally by: region" rather than repeating
-    itself — the model is being told what to do once, not twice.
+    itself - the model is being told what to do once, not twice.
 
     The previous turn is the *resolved* question of that turn, so a chain of
     follow-ups accumulates rather than each one only seeing the turn before:
@@ -276,7 +276,7 @@ def _clarify(question: str, matched: QuestionType | None) -> Intent | None:
     """Ask for exactly what is missing (F20), or None when nothing is.
 
     A single generic "please be more specific" is the easy implementation and
-    the useless one — the user already knows their question was vague, and
+    the useless one - the user already knows their question was vague, and
     what they need is to be told *which part*. So the checks are separate and
     each carries its own concrete rewrites.
     """
@@ -298,8 +298,8 @@ def _clarify(question: str, matched: QuestionType | None) -> Intent | None:
         )
 
     # Deliberately *not* here: "top customers" with no measure named. It is
-    # genuinely ambiguous — revenue, order count and recency give three
-    # different answers — but Phase 2 decided such questions get answered with
+    # genuinely ambiguous - revenue, order count and recency give three
+    # different answers - but Phase 2 decided such questions get answered with
     # the assumption stated rather than refused, and that decision holds. F20
     # is about making the clarifications that already fire more useful, not
     # about refusing more questions.
@@ -355,7 +355,7 @@ def analyze(question: str, history: list[str] | None = None) -> Intent:
         return clarification
 
     return Intent(
-        # Nothing matched but the question still has substance — treat it as a
+        # Nothing matched but the question still has substance - treat it as a
         # plain lookup rather than refusing to answer.
         question_type=matched or QuestionType.FILTER,
         resolved_question=resolved,

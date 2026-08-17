@@ -8,7 +8,7 @@ click the **+** button in the terminal panel.
 
 ---
 
-## Terminal 1 — the backend
+## Terminal 1 - the backend
 
 Type this and press Enter:
 
@@ -27,7 +27,7 @@ Now **leave this terminal alone.** Don't type in it, don't close it.
 
 ---
 
-## Terminal 2 — the frontend
+## Terminal 2 - the frontend
 
 Click **+** to open a second terminal, then type:
 
@@ -87,7 +87,7 @@ Then start Terminal 1 again.
 ### The page won't load
 
 Use **localhost**, not `127.0.0.1`, in the browser. The frontend only answers
-to `localhost`. (The backend is the opposite — but you never type that one
+to `localhost`. (The backend is the opposite - but you never type that one
 into a browser, so it doesn't matter.)
 
 ### Something looks broken or empty
@@ -108,7 +108,7 @@ cd backend; .venv\Scripts\python -m scripts.check_llm
 ```
 
 If it ends with **"a real model translated the question"**, everything is
-working. If it says *placeholder*, the AI key stopped working — the rest of
+working. If it says *placeholder*, the AI key stopped working - the rest of
 the app still runs fine.
 
 ---

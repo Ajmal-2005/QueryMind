@@ -2,7 +2,7 @@
 
 What makes this safe to cache at all: every query that reaches execution has
 passed the safety gate, so it is a read. Nothing in this system writes to a
-target database, which means a cached result can only ever be stale — never
+target database, which means a cached result can only ever be stale - never
 wrong about an operation that happened.
 
 Staleness is the whole risk, and it is handled by being short and honest: a

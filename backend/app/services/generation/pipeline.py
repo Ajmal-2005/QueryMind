@@ -5,7 +5,7 @@ does feeding the database's own error message back to the model recover a
 meaningful fraction of them?
 
 The database's errors are unusually good repair signals because they are
-specific — "no such column: cust_name" rather than "query failed" — and the
+specific - "no such column: cust_name" rather than "query failed" - and the
 schema gate deliberately produces messages in the same shape, with a "did you
 mean" hint, so a validation failure repairs as readily as an execution one.
 
@@ -76,7 +76,7 @@ class QueryOutcome:
     validation: ValidationResult | None = None
     execution: ExecutionResult | None = None
     analysis: Analysis | None = None
-    """Profile, chart, outliers and trend. Only ever set on a successful run —
+    """Profile, chart, outliers and trend. Only ever set on a successful run -
     there is nothing to profile about a rejected or failed query."""
 
     explanation: Explanation | None = None
@@ -112,7 +112,7 @@ class QueryOutcome:
 
     @property
     def correction_attempts(self) -> int:
-        """Repair passes made — zero when the first attempt worked."""
+        """Repair passes made - zero when the first attempt worked."""
         return max(0, len(self.attempts) - 1)
 
     @property
@@ -190,7 +190,7 @@ def run(
 
     # Examples chosen by similarity to *this* question, with corrections
     # ranked above plain successes (F22). Timed separately because its cost
-    # grows with query history rather than with the question — the one stage
+    # grows with query history rather than with the question - the one stage
     # here that gets slower the longer the system is used. An untimed stage is
     # an uninvestigable one.
     stage = time.perf_counter()
@@ -239,7 +239,7 @@ def run(
 
     for attempt_number in range(1, max_attempts + 1):
         # The cached SQL takes the first attempt. If it fails validation or
-        # execution — the schema may have moved since — the loop falls through
+        # execution - the schema may have moved since - the loop falls through
         # to real generation on the next pass rather than giving up.
         if attempt_number == 1 and outcome.semantic_hit is not None:
             generation = outcome.generation

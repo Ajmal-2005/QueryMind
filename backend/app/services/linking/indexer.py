@@ -44,7 +44,7 @@ def index_connection(
 ) -> IndexResult:
     """Build the searchable schema index for one connection.
 
-    Re-indexing replaces the previous index wholesale rather than merging —
+    Re-indexing replaces the previous index wholesale rather than merging -
     a dropped column must disappear, and reconciling is more code and more
     ways to be subtly wrong than rebuilding.
     """

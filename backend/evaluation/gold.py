@@ -1,7 +1,7 @@
 """Reading the ground truth out of a gold query.
 
 Benchmark datasets give a question and the SQL that answers it. They do not
-give the table set, which is what schema-linking recall is measured against —
+give the table set, which is what schema-linking recall is measured against -
 so it is parsed out of the gold SQL here.
 
 Doing this with sqlglot rather than a regex matters more than it looks. A
@@ -22,7 +22,7 @@ class GoldQuery:
     tables: list[str]
     parsed: bool
     order_matters: bool
-    """True when the gold query has an ORDER BY — row order is then part of
+    """True when the gold query has an ORDER BY - row order is then part of
     the answer and execution match must respect it."""
 
 

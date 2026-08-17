@@ -26,7 +26,7 @@ export function InsightPanel({
     queryKey: ['insight', connectionId, sql],
     queryFn: () => fetchInsight({ connection_id: connectionId, sql, question }),
     // The same SQL over the same connection yields the same summary, and the
-    // backend caches the rows anyway — no reason to pay for it twice.
+    // backend caches the rows anyway - no reason to pay for it twice.
     staleTime: 5 * 60_000,
     retry: false,
   })
@@ -75,13 +75,13 @@ export function InsightPanel({
         </span>
         {data.model === 'template' && (
           <span className="text-data-amber">
-            computed from the statistics — no language model was called
+            computed from the statistics - no language model was called
           </span>
         )}
         {data.masked_columns.length > 0 && (
           <span
             title={data.masked_columns
-              .map((c) => `${c.column} — ${c.detected_as}, by ${c.rule}`)
+              .map((c) => `${c.column} - ${c.detected_as}, by ${c.rule}`)
               .join('\n')}
             className="flex items-center gap-1 text-sql-syntax-string"
           >

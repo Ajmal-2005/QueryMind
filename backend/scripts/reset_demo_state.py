@@ -2,7 +2,7 @@
 
 Written after a live failure worth recording: editing `.env` changed
 `CREDENTIAL_ENCRYPTION_KEY`, and every stored connection immediately became
-undecryptable — the app returned 500 on any query. That is correct behaviour
+undecryptable - the app returned 500 on any query. That is correct behaviour
 (credentials are encrypted at rest, and a changed key *should* make them
 unreadable) but it leaves the demo dead with no obvious way back.
 

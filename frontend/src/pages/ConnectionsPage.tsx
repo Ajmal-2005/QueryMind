@@ -123,7 +123,7 @@ export function ConnectionsPage() {
             <div className="flex items-center gap-2">
               <Icon name="schema" size={20} className="text-on-surface-variant" />
               <h3 className="text-headline-sm text-primary">
-                {active.name} — indexed schema
+                {active.name} - indexed schema
               </h3>
             </div>
             <Button size="sm" variant="ghost" onClick={() => setExpanded(null)}>
@@ -359,7 +359,7 @@ function CardAction({
   )
 }
 
-/** "2m ago" / "3h ago" / "5d ago" — the design shows relative index times. */
+/** "2m ago" / "3h ago" / "5d ago" - the design shows relative index times. */
 function relativeTime(iso: string): string {
   const then = new Date(iso).getTime()
   if (Number.isNaN(then)) return 'recently'

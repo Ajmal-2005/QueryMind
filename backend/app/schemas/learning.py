@@ -1,4 +1,4 @@
-"""API contracts for conversation and learning (F21–F25)."""
+"""API contracts for conversation and learning (F21-F25)."""
 
 from datetime import datetime
 
@@ -34,7 +34,7 @@ class ExampleRead(BaseModel):
     sql: str
     score: float
     source: str
-    """'correction' or 'history' — provenance stays visible."""
+    """'correction' or 'history' - provenance stays visible."""
 
 
 class GlossaryMatchRead(BaseModel):

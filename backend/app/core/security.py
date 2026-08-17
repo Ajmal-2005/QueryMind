@@ -25,7 +25,7 @@ def verify_password(plain: str, hashed: str) -> bool:
     try:
         return _pwd_context.verify(plain, hashed)
     except ValueError:
-        # Malformed hash in the database — treat as a failed login, not a 500.
+        # Malformed hash in the database - treat as a failed login, not a 500.
         return False
 
 

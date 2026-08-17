@@ -20,7 +20,7 @@ function apply(theme: Theme) {
  *
  *  Colours come from custom properties. An element that transitions a
  *  property fed by a variable can keep its pre-change computed value when
- *  that variable is swapped — the card backgrounds stayed dark in light mode
+ *  that variable is swapped - the card backgrounds stayed dark in light mode
  *  because of exactly this. Killing transitions for the duration of the swap
  *  avoids the stale paint, and makes the change instant rather than a
  *  half-second cross-fade.

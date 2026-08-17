@@ -1,8 +1,8 @@
 """Token and cost tracking (F29), and the audit trail.
 
-Appendix B lists `GET /api/v1/usage`. Every ingredient already existed — the
+Appendix B lists `GET /api/v1/usage`. Every ingredient already existed - the
 `queries` table records `tokens_used` per question and `audit_log` records
-every security-relevant action — but nothing read them back, so nobody could
+every security-relevant action - but nothing read them back, so nobody could
 answer "what has this cost?" without opening the database.
 
 Costs are computed from a published price table rather than stored per row.
@@ -48,7 +48,7 @@ RATES: dict[str, tuple[float, float]] = {
 
 DEFAULT_MODEL = "claude-sonnet-5"
 
-# `queries.tokens_used` is a single total — the schema predates the split, and
+# `queries.tokens_used` is a single total - the schema predates the split, and
 # a migration to separate columns is not worth it for an estimate. Generation
 # prompts are heavily input-weighted: a schema subgraph in, one statement out.
 ASSUMED_INPUT_SHARE = 0.85
@@ -168,7 +168,7 @@ def audit(
     db: Session = Depends(get_db),
     # The audit log records who did what across every user. Reading it is an
     # administrative act, and this is the first endpoint in the system to say
-    # so — `require_roles` has existed since Phase 0 and was never wired up.
+    # so - `require_roles` has existed since Phase 0 and was never wired up.
     user: User = Depends(require_roles(UserRole.ADMIN)),
 ) -> list[AuditEntry]:
     rows = db.scalars(

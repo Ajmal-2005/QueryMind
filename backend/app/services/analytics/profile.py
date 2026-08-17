@@ -1,7 +1,7 @@
 """Statistical profiling of a result set (F14).
 
-Everything downstream of this module — chart selection, outlier detection,
-trend analysis, and the narrative prompt — reads the profile rather than the
+Everything downstream of this module - chart selection, outlier detection,
+trend analysis, and the narrative prompt - reads the profile rather than the
 raw rows. That keeps one type-inference decision in one place instead of
 four modules each guessing what a column is.
 
@@ -23,15 +23,15 @@ from typing import Any
 # How many distinct values a column may have and still act as a *label*.
 # Deliberately not a ratio of distinct to total: the grouping key of any
 # GROUP BY has exactly one row per value, so "revenue by region" would score
-# 1.0 and be classified as free text — the single most common result shape
+# 1.0 and be classified as free text - the single most common result shape
 # this product produces. Cardinality alone is the honest test.
 #
 # This is the profiler's question ("can this label something?"), not the chart
 # module's ("can 50 bars be read?"). Those are different limits and they live
-# in different places — see charts.MAX_BARS.
+# in different places - see charts.MAX_BARS.
 MAX_CATEGORICAL_DISTINCT = 50
 
-# Free text — a description, a comment, an address — is not a label whatever
+# Free text - a description, a comment, an address - is not a label whatever
 # its cardinality. Length separates the two far better than counting does.
 MAX_CATEGORICAL_VALUE_LENGTH = 60
 
@@ -60,7 +60,7 @@ class ColumnKind(str, Enum):
     BOOLEAN = "boolean"
     TEXT = "text"
     EMPTY = "empty"
-    """Every value is null — nothing can be said about it."""
+    """Every value is null - nothing can be said about it."""
 
 
 @dataclass
@@ -76,7 +76,7 @@ class ColumnProfile:
     index: int
     kind: ColumnKind
     inferred_from: str
-    """Why the classifier chose this kind — surfaced in the UI."""
+    """Why the classifier chose this kind - surfaced in the UI."""
 
     count: int = 0
     """Non-null values."""
@@ -130,7 +130,7 @@ class ResultProfile:
 
     @property
     def is_scalar(self) -> bool:
-        """One row, one column — a single number, not a table."""
+        """One row, one column - a single number, not a table."""
         return self.row_count == 1 and self.column_count == 1
 
 
@@ -193,13 +193,13 @@ def _classify(values: list[Any], row_count: int) -> tuple[ColumnKind, str]:
     rendered = [stringify(v) for v in values]
     longest = max(len(v) for v in rendered)
     if longest > MAX_CATEGORICAL_VALUE_LENGTH:
-        return ColumnKind.TEXT, f"values run to {longest} characters — free text"
+        return ColumnKind.TEXT, f"values run to {longest} characters - free text"
 
     distinct = len(set(rendered))
     if distinct <= MAX_CATEGORICAL_DISTINCT:
         return ColumnKind.CATEGORICAL, f"{distinct} distinct values across {row_count}"
 
-    return ColumnKind.TEXT, f"{distinct} distinct values — too many to be labels"
+    return ColumnKind.TEXT, f"{distinct} distinct values - too many to be labels"
 
 
 def _numeric_statistics(profile: ColumnProfile, values: list[Any]) -> None:

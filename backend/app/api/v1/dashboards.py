@@ -1,14 +1,14 @@
 """Saved dashboards (F18).
 
 A dashboard is a set of pinned queries that re-run when it is opened. Nothing
-is precomputed and nothing is stored but the SQL — a dashboard showing figures
+is precomputed and nothing is stored but the SQL - a dashboard showing figures
 from last Tuesday is worse than no dashboard, and a cache with a five-minute
 TTL already covers the cost of several people opening the same board at once.
 
 Refresh is deliberately forgiving at the tile level and strict at the gate
 level: one broken tile shows as a broken tile beside five working ones, but
 every tile's SQL is re-validated on every refresh. A query that was safe when
-pinned is not assumed safe now — the schema may have been re-indexed, and a
+pinned is not assumed safe now - the schema may have been re-indexed, and a
 column it referenced may be gone.
 """
 
@@ -239,7 +239,7 @@ def add_tile(
         query_id=payload.query_id,
         title=payload.title,
         question=payload.question,
-        # Store the validated SQL — the same text the gates approved, with any
+        # Store the validated SQL - the same text the gates approved, with any
         # LIMIT they added, so refresh runs exactly what was pinned.
         sql=validation.sql,
         chart=payload.chart,

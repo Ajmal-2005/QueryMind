@@ -108,7 +108,7 @@ def test_insight_returns_a_written_summary(
 
     assert body["headline"]
     assert body["summary"]
-    # No API key in tests, so the template narrator answers — and says so.
+    # No API key in tests, so the template narrator answers - and says so.
     assert body["model"] == "template"
 
 

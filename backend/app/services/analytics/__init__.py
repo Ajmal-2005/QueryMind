@@ -1,7 +1,7 @@
 """Result analytics: profiling, chart selection, outliers, trends, narrative.
 
 Everything here reads a result set and says something about it. Nothing here
-touches a database, and only `narrative` touches a network — which is why the
+touches a database, and only `narrative` touches a network - which is why the
 LLM-free parts run inline in the query pipeline and the narrative does not.
 """
 

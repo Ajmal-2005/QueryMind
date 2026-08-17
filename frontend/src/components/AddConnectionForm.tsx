@@ -55,7 +55,7 @@ export function AddConnectionDialog({ onClose }: { onClose: () => void }) {
     event.preventDefault()
     setError(null)
     // A file-backed database has no host, port, or credentials. Send port as
-    // null rather than 0 — the API validates it as a real port number when
+    // null rather than 0 - the API validates it as a real port number when
     // present, and 0 is not one.
     mutation.mutate(
       isFile

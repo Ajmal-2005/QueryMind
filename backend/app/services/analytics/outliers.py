@@ -3,7 +3,7 @@
 Two methods, deliberately, because they disagree in useful ways. The z-score
 asks how many standard deviations a value sits from the mean; the IQR rule
 asks whether it falls outside the middle half of the data stretched by 1.5.
-The z-score is the weaker of the two on the shapes this system produces —
+The z-score is the weaker of the two on the shapes this system produces -
 revenue, counts, durations are all right-skewed, and a single large value
 inflates the standard deviation enough to hide itself. The IQR rule reads
 quartiles, which that value cannot move.
@@ -25,7 +25,7 @@ Z_SCORE_THRESHOLD = 3.0
 # flags from noise.
 MIN_ROWS_FOR_DETECTION = 8
 
-# A pathological column — say a join that fanned out — could flag thousands of
+# A pathological column - say a join that fanned out - could flag thousands of
 # rows and bloat the response. The count stays honest; the detail is capped.
 MAX_REPORTED = 200
 
@@ -124,7 +124,7 @@ def _detect_column(
 
     if lower is None and not use_z:
         summary.checked = False
-        summary.reason = "every value is identical — nothing can be an outlier"
+        summary.reason = "every value is identical - nothing can be an outlier"
 
     return summary, found
 
@@ -144,7 +144,7 @@ def detect(profile: ResultProfile, rows: list[list[Any]]) -> OutlierReport:
                     column=column.name,
                     checked=False,
                     reason=(
-                        f"{column.count} rows — too few for a distribution "
+                        f"{column.count} rows - too few for a distribution "
                         f"(need {MIN_ROWS_FOR_DETECTION})"
                     ),
                 )

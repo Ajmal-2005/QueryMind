@@ -115,7 +115,7 @@ def execute_sql(
     """Execute SQL the user wrote or edited.
 
     Runs the identical gates. A hand-edited query is not more trusted than a
-    generated one — if anything it is less, since it did not come from a
+    generated one - if anything it is less, since it did not come from a
     prompt that forbade writes.
     """
     connection = _owned_connection(payload.connection_id, db, user)
@@ -200,7 +200,7 @@ def suggestions(
 
     Generated from the indexed schema rather than hardcoded, so pointing this
     at a different database offers questions that database can actually
-    answer. A starter that fails is worse than no starter — the user
+    answer. A starter that fails is worse than no starter - the user
     reasonably concludes the product is broken.
     """
     connection = _owned_connection(connection_id, db, user)
@@ -256,7 +256,7 @@ def insight(
     prose would make the product feel slower than it is. The UI renders the
     result first and fills this in when it lands.
 
-    The rows are re-fetched here rather than posted up by the client — the
+    The rows are re-fetched here rather than posted up by the client - the
     server will not narrate data it has not read out of the database itself.
     """
     connection = _owned_connection(payload.connection_id, db, user)
@@ -316,7 +316,7 @@ def _filename(title: str, extension: str) -> str:
     """A safe download name.
 
     Quoted in a Content-Disposition header, so anything that could break out
-    of the quoting — or out of the directory — is stripped rather than escaped.
+    of the quoting - or out of the directory - is stripped rather than escaped.
     """
     cleaned = re.sub(r"[^\w\-. ]+", "", title).strip().replace(" ", "-")
     stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M")

@@ -15,7 +15,7 @@ function compare(a: unknown, b: unknown): number {
 }
 
 function format(value: unknown): string {
-  if (value === null || value === undefined) return '—'
+  if (value === null || value === undefined) return '-'
   if (typeof value === 'number') return value.toLocaleString()
   return String(value)
 }
@@ -106,7 +106,7 @@ export function ResultTable({ result }: { result: ResultSet }) {
         <span>
           {rows.length === 0
             ? 'No rows'
-            : `Showing ${page * PAGE_SIZE + 1}–${Math.min((page + 1) * PAGE_SIZE, rows.length)} of ${rows.length.toLocaleString()}`}
+            : `Showing ${page * PAGE_SIZE + 1}-${Math.min((page + 1) * PAGE_SIZE, rows.length)} of ${rows.length.toLocaleString()}`}
           {result.truncated && (
             <span className="ml-2 text-data-amber">
               · capped, more rows exist

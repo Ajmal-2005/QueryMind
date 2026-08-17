@@ -1,12 +1,12 @@
 """Business glossary (F24).
 
 "Active user" is not in any schema. It is a definition an organisation holds
-in its head, and a model asked to compute it will invent one — a different one
+in its head, and a model asked to compute it will invent one - a different one
 each time, all of them plausible, none of them the company's. The glossary is
 where that definition gets written down once.
 
 Matching is deliberately literal: a term is used when its words appear in the
-question. Embedding similarity would be the fancier choice and the wrong one —
+question. Embedding similarity would be the fancier choice and the wrong one -
 a glossary entry silently applied because it was *nearly* relevant would
 change the meaning of a query without the user asking, and they would have no
 way to see why the number moved.

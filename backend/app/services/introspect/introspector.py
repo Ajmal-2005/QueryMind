@@ -82,7 +82,7 @@ class SchemaSnapshot:
 def _row_estimate(conn, dialect: Dialect, table: str, schema: str | None) -> int | None:
     """Approximate row count.
 
-    Uses the statistics catalog on Postgres and MySQL — an exact COUNT(*) on
+    Uses the statistics catalog on Postgres and MySQL - an exact COUNT(*) on
     a large production table is exactly the kind of query this system must
     never fire during indexing.
     """

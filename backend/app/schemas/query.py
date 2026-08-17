@@ -21,7 +21,7 @@ class QueryRequest(BaseModel):
 class ExecuteRequest(BaseModel):
     """Run user-edited SQL against a connection.
 
-    Hand-written SQL goes through exactly the same gates as generated SQL —
+    Hand-written SQL goes through exactly the same gates as generated SQL -
     the validation engine does not trust the client any more than it trusts
     the model.
     """
