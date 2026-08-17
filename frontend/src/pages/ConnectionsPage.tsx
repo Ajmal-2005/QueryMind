@@ -76,7 +76,7 @@ export function ConnectionsPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <button
           onClick={() => setAdding(true)}
-          className="group relative flex h-[220px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-subtle bg-surface-container-lowest shadow-card transition-shadow duration-200 hover:border-primary hover:shadow-card-hover"
+          className="group relative flex min-h-[220px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-subtle bg-surface-container-lowest shadow-card transition-shadow duration-200 hover:border-primary hover:shadow-card-hover"
         >
           <div className="absolute inset-0 bg-secondary-container opacity-0 transition-opacity group-hover:opacity-10" />
           <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant transition-colors group-hover:bg-primary-fixed group-hover:text-primary">
@@ -195,9 +195,12 @@ function ConnectionCard({ connection, expanded, onToggle }: CardProps) {
       ? connection.database.split(/[\\/]/).pop()
       : `${connection.host}:${connection.port}/${connection.database}`
 
+  // min-h rather than a fixed h: the status line grows when a test or an index
+  // run reports back, and a fixed height pushed that overflow straight out
+  // through the bottom of the card.
   return (
     <div
-      className={`flex h-[220px] flex-col rounded-xl border bg-surface-container-lowest p-5 shadow-card transition-shadow hover:shadow-card-hover ${
+      className={`flex min-h-[220px] flex-col rounded-xl border bg-surface-container-lowest p-5 shadow-card transition-shadow hover:shadow-card-hover ${
         failed ? 'border-error-container' : 'border-subtle'
       }`}
     >
