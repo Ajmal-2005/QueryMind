@@ -123,3 +123,20 @@ cd frontend; npm install
 ```
 
 You should not need to do this again.
+
+---
+
+## Before you present: one command
+
+```powershell
+cd backend; .venv\Scripts\python -m scripts.preflight
+```
+
+It checks the interpreter, the provider keys and SDKs, and opens every
+connection for real - then asks each demo question once so the answers are
+cached. After that the same questions come back in under a tenth of a second
+without calling the model at all, so a rate limit or a dropped network cannot
+derail the demo.
+
+It ends with **READY** when everything is in order, and names what is wrong
+when it is not.

@@ -156,15 +156,33 @@ def lookup(
         .limit(CANDIDATE_LIMIT)
     ).all()
 
-    candidates = [
-        (qid, q, sql)
-        for qid, q, sql in rows
-        # An identical question is served by the SQL cache already; this is
-        # for the differently-worded ones.
-        if sql and q and q.strip().lower() != question.strip().lower()
-    ]
-    if not candidates:
+    usable = [(qid, q, sql) for qid, q, sql in rows if sql and q]
+    if not usable:
         return None
+
+    # An exact repeat short-circuits before any embedding work. This used to
+    # be *excluded* here, on the reasoning that the result cache already
+    # covered it - which was wrong: that cache is keyed on the validated SQL,
+    # and the SQL does not exist until generation has already run and been
+    # paid for. Re-asking a question verbatim therefore cost a full model call
+    # every time.
+    #
+    # It is also the safest hit the cache can serve: same user, same
+    # connection, byte-identical text, so neither the similarity threshold nor
+    # the polarity guard has anything left to protect against.
+    asked = question.strip().lower()
+    for query_id, past, sql in usable:
+        if past.strip().lower() == asked:
+            log.info("semantic_cache_exact_hit", embedder=embedder.name)
+            return SemanticHit(
+                question=past,
+                sql=sql,
+                similarity=1.0,
+                query_id=query_id,
+                embedder=embedder.name,
+            )
+
+    candidates = usable
 
     # Word overlap first, embeddings second. A past question sharing no
     # content word with this one cannot clear a 0.93 threshold, so paying to

@@ -197,14 +197,33 @@ def test_rendered_glossary_tells_the_model_not_to_substitute(
 # ----------------------------------------------------------- semantic cache
 
 
-def test_an_identical_question_is_left_to_the_sql_cache(
+def test_an_exact_repeat_is_served_without_calling_a_model(
     db: Session, demo_connection
 ) -> None:
+    """This used to be excluded, on the reasoning that the result cache
+    covered it. It did not: that cache is keyed on the validated SQL, which
+    does not exist until generation has already run and been paid for."""
     question = "total revenue by region"
     _executed(db, demo_connection, question, "SELECT 1")
+
+    hit = semantic_lookup(db, demo_connection.id, question, demo_connection.user_id)
+    assert hit is not None
+    assert hit.similarity == 1.0
+    assert hit.sql == "SELECT 1"
+
+
+def test_an_exact_repeat_ignores_case_and_surrounding_space(
+    db: Session, demo_connection
+) -> None:
+    _executed(db, demo_connection, "Total Revenue By Region", "SELECT 1")
     assert (
-        semantic_lookup(db, demo_connection.id, question, demo_connection.user_id)
-        is None
+        semantic_lookup(
+            db,
+            demo_connection.id,
+            "  total revenue by region ",
+            demo_connection.user_id,
+        )
+        is not None
     )
 
 
