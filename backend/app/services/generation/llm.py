@@ -1,15 +1,3 @@
-"""LLM providers for SQL generation.
-
-One interface, three implementations: Anthropic (the proposal's primary), a
-deterministic stub so the pipeline and its tests run with no API key, and a
-scripted stub for driving specific responses in tests.
-
-Structured output goes through the API's ``output_config.format`` rather than
-prefilling the assistant turn with ``{``. Prefill is rejected on current
-models, and a schema-constrained response is a stronger guarantee than a
-prefix nudge anyway.
-"""
-
 import json
 from dataclasses import dataclass, field
 from typing import Protocol, runtime_checkable
@@ -49,6 +37,60 @@ MAX_OUTPUT_TOKENS = 4096
 # Retries for errors that genuinely recover - a 503 blip, a momentary rate
 # limit. Deliberately not for quota or auth failures, which never do.
 TRANSIENT_RETRIES = 2
+
+# Which pip distribution provides each provider's SDK, so a missing one can
+# say what to install rather than surfacing a bare ModuleNotFoundError.
+SDK_PACKAGES = {
+    "anthropic": "anthropic",
+    "openai": "openai",
+    "gemini": "google-genai",
+}
+
+
+def _require_sdk(provider: str, importer):
+    """Import a provider SDK, turning absence into an LLMError.
+
+    A missing SDK raises `ModuleNotFoundError`, which is not an `LLMError` and
+    so used to travel straight through the failover chain and out of the API
+    as a 500 - the one outcome the chain exists to prevent. It is a provider
+    being unavailable, exactly like a 429, and is reported as one.
+
+    The message names the interpreter as well as the package: the usual cause
+    is not an uninstalled dependency but a server started with the system
+    Python instead of the virtualenv that has it.
+    """
+    try:
+        return importer()
+    except ImportError as exc:
+        import sys
+
+        raise LLMError(
+            f"the {provider} SDK is not importable "
+            f"(pip install {SDK_PACKAGES.get(provider, provider)}); "
+            f"running under {sys.executable}"
+        ) from exc
+
+
+def _import_genai():
+    """The Gemini SDK imports as two names, so it needs its own importer."""
+    from google import genai
+    from google.genai import types
+
+    return genai, types
+
+
+def sdk_available(provider: str) -> bool:
+    """Is this provider's SDK importable in the running interpreter?"""
+    import importlib.util
+
+    module = {"anthropic": "anthropic", "openai": "openai", "gemini": "google"}[
+        provider
+    ]
+    try:
+        return importlib.util.find_spec(module) is not None
+    except (ImportError, ValueError):
+        return False
+
 
 _TRANSIENT_MARKERS = ("503", "502", "500", "unavailable", "deadline", "timeout")
 
@@ -175,7 +217,7 @@ class AnthropicClient:
     def generate(self, prompt: BuiltPrompt) -> Generation:
         import time
 
-        import anthropic
+        anthropic = _require_sdk("anthropic", lambda: __import__("anthropic"))
 
         client = anthropic.Anthropic(api_key=self.api_key)
         started = time.perf_counter()
@@ -237,8 +279,7 @@ class GeminiClient:
     def generate(self, prompt: BuiltPrompt) -> Generation:
         import time
 
-        from google import genai
-        from google.genai import types
+        genai, types = _require_sdk("gemini", _import_genai)
 
         client = genai.Client(api_key=self.api_key)
         started = time.perf_counter()
@@ -321,7 +362,7 @@ class OpenAIClient:
     def generate(self, prompt: BuiltPrompt) -> Generation:
         import time
 
-        import openai
+        openai = _require_sdk("openai", lambda: __import__("openai"))
 
         # No SDK-level retries: the failure this actually sees is an
         # out-of-quota 429, which no amount of retrying resolves. Retrying it
@@ -458,10 +499,26 @@ class FailoverClient:
         for client in self.clients:
             try:
                 generation = client.generate(prompt)
-            except LLMError as exc:
+            except Exception as exc:  # noqa: BLE001 - see below
+                # Deliberately broad. This used to catch only `LLMError`, which
+                # meant anything a provider SDK raised that was not already
+                # wrapped - a missing module, a signature change, a bug in the
+                # client library - travelled straight out of the chain and left
+                # the API returning 500. That is precisely the outcome failover
+                # exists to prevent: from the caller's position "the SDK is not
+                # installed" and "the provider returned 429" are the same event,
+                # a provider that cannot answer.
+                #
+                # The stub anchors the chain, so a genuine programming error
+                # here degrades to a placeholder rather than vanishing: the
+                # exception type is logged, and every failure is quoted in the
+                # stub's assumptions where the user can see it.
                 errors.append(f"{client.name}: {exc}")
                 log.warning(
-                    "llm_provider_failed", provider=client.name, error=str(exc)[:160]
+                    "llm_provider_failed",
+                    provider=client.name,
+                    error_type=type(exc).__name__,
+                    error=str(exc)[:160],
                 )
                 continue
 
@@ -511,11 +568,21 @@ def get_client() -> LLMClient:
         "gemini": settings.GEMINI_API_KEY,
     }
 
-    chain: list[LLMClient] = [
-        builders[name]()
-        for name in (n.strip().lower() for n in settings.LLM_PROVIDER_ORDER.split(","))
-        if name in builders and keys[name]
-    ]
+    chain: list[LLMClient] = []
+    for name in (n.strip().lower() for n in settings.LLM_PROVIDER_ORDER.split(",")):
+        if name not in builders or not keys[name]:
+            continue
+        # A key without its SDK is a provider that will fail on every single
+        # call. Skipping it here keeps the chain honest and puts the reason in
+        # the startup log, rather than rediscovering it per request.
+        if not sdk_available(name):
+            log.warning(
+                "llm_provider_unavailable",
+                provider=name,
+                reason=f"{SDK_PACKAGES[name]} is not installed in this interpreter",
+            )
+            continue
+        chain.append(builders[name]())
 
     if not chain:
         log.warning("using_stub_llm", reason="no LLM provider key configured")

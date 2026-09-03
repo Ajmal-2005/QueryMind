@@ -184,3 +184,62 @@ def test_transient_errors_are_distinguished_from_permanent_ones() -> None:
     assert _is_transient(Exception("deadline exceeded"))
     assert not _is_transient(Exception("insufficient_quota"))
     assert not _is_transient(Exception("API key not valid"))
+
+
+def test_a_missing_sdk_does_not_escape_the_chain() -> None:
+    """The 500 this prevents.
+
+    `from google import genai` raises ModuleNotFoundError, which is not an
+    LLMError. The chain used to catch only LLMError, so a missing SDK went
+    straight out through the API as an HTTP 500 - the exact outcome failover
+    exists to stop.
+    """
+    from app.services.generation.llm import FailoverClient, StubClient
+
+    class MissingSDK:
+        name = "gemini"
+        model = "gemini-3.1-flash-lite"
+
+        def generate(self, prompt):
+            raise ModuleNotFoundError("No module named 'google'")
+
+    generation = FailoverClient([MissingSDK(), StubClient()]).generate(PROMPT)
+
+    assert generation.model == "stub"
+    assert any("No module named" in a for a in generation.assumptions)
+
+
+def test_a_missing_sdk_falls_through_to_a_working_provider() -> None:
+    from app.services.generation.llm import FailoverClient
+
+    class MissingSDK:
+        name = "gemini"
+        model = "x"
+
+        def generate(self, prompt):
+            raise ModuleNotFoundError("No module named 'google'")
+
+    working = ScriptedClient([{"sql": "SELECT 1", "confidence": 1}])
+    assert FailoverClient([MissingSDK(), working]).generate(PROMPT).sql == "SELECT 1"
+
+
+def test_any_unexpected_provider_error_is_contained() -> None:
+    """Not just import errors - a client library bug must not 500 either."""
+    from app.services.generation.llm import FailoverClient, StubClient
+
+    class Exploding:
+        name = "openai"
+        model = "x"
+
+        def generate(self, prompt):
+            raise TypeError("unexpected keyword argument 'output_config'")
+
+    assert FailoverClient([Exploding(), StubClient()]).generate(PROMPT).model == "stub"
+
+
+def test_sdk_availability_is_detectable() -> None:
+    from app.services.generation.llm import sdk_available
+
+    # Installed in this project's virtualenv.
+    assert sdk_available("gemini") is True
+    assert sdk_available("openai") is True
